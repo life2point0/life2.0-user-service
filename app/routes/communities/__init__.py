@@ -1,0 +1,1 @@
+from .index import router as community_router

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from .base import TimeStampedModel
 from uuid import uuid4
 from .association_tables import user_occupations_table, user_past_locations_table, user_interests_table
+from .place import PlaceModel
 
 
 class UserModel(TimeStampedModel):
@@ -25,3 +26,31 @@ class UserModel(TimeStampedModel):
     past_locations = relationship("PlaceModel", secondary=user_past_locations_table, back_populates="users_previously_here")
     occupations = relationship("OccupationModel", secondary=user_occupations_table, back_populates='users')
     interests = relationship("InterestModel", secondary=user_interests_table, back_populates='users')
+
+    def __init__(self, **kwargs):
+        self.first_name = kwargs.get('first_name')
+        self.last_name = kwargs.get('last_name')
+        self.phone_country_code = kwargs.get('phone_country_code')
+        self.phone_number = kwargs.get('phone_number')
+        self.email = kwargs.get('email')
+        self.description = kwargs.get('description')
+
+        place_of_origin = PlaceModel(**kwargs.get('place_of_origin'))
+        current_location = PlaceModel(**kwargs.get('current_location'))
+        past_locations = kwargs.get('past_locations', [])
+        occupations = kwargs.get('occupations', [])
+        interests = kwargs.get('interests', [])
+
+        if place_of_origin:
+            self.place_of_origin = place_of_origin
+        if current_location:
+            self.current_location = current_location
+        if past_locations:
+            self.past_locations = past_locations
+        if occupations:
+            self.occupations = occupations
+        if interests:
+            self.interests = interests
+    
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

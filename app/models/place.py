@@ -15,3 +15,8 @@ class PlaceModel(TimeStampedModel):
     users_originally_from_here = relationship("UserModel", foreign_keys="UserModel.place_of_origin_id")
     users_currently_here = relationship("UserModel", foreign_keys="UserModel.current_location_id")
     users_previously_here = relationship("UserModel", secondary=user_past_locations_table, back_populates='past_locations')
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        geolocation = kwargs.get('geolocation')
+        self.geolocation = f"POINT({geolocation['lat']} {geolocation['lng']})"
