@@ -1,9 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import sessionmaker
+from app.constants import DATABASE_URL
 import os
-
-DATABASE_URL = os.getenv('DATABASE_URL')
 
 # Initialize the database engine
 engine = create_engine(DATABASE_URL)
