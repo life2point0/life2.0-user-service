@@ -114,14 +114,14 @@ def add_user_to_cometchat_group(user_id: str, group_id: str):
         logging.error(e)
         raise e
     
-def update_place_attribute(existing_user, attribute_name, data_dict, db):
-    if attribute_name in data_dict:
+def update_place_attribute(user, attribute_name, data_dict, db):
+    if attribute_name in data_dict and data_dict[attribute_name] is not None:
         existing_place = db.query(PlaceModel).filter(PlaceModel.id == data_dict[attribute_name]['id']).first()
         if existing_place:
-            setattr(existing_user, attribute_name, existing_place)
+            setattr(user, attribute_name, existing_place)
         else:
             new_place = PlaceModel(**data_dict[attribute_name])
-            setattr(existing_user, attribute_name, new_place)
+            setattr(user, attribute_name, new_place)
 
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
@@ -140,7 +140,7 @@ def update_current_user(
         raise HTTPException(status_code=404, detail='User not found')
     existing_user: UserModel = db.query(UserModel).filter(UserModel.id == user_id).first()
     user: UserModel
-    logging.info(existing_user)
+    logging.info('[Existing User]', existing_user)
     if existing_user is None:
         data_dict = user_data.model_dump()
         user = UserModel(**data_dict)
@@ -151,7 +151,7 @@ def update_current_user(
         update_place_attribute(user, 'place_of_origin', data_dict, db)
         update_place_attribute(user, 'current_location', data_dict, db)
         db.add(user)
-        create_cometchat_user(user)
+        logging.info('[User]', user.as_dict())
     else:    
         data_dict = user_data.model_dump()
         logging.info(data_dict)
@@ -166,7 +166,8 @@ def update_current_user(
     db.refresh(user)
     user_dict= {**user.as_dict(), "id": str(user.id)}
     create_cometchat_user(UserPartialDTO(**user_dict))
-    return user_dict
+    logging.info('[SUCCESS]')
+    return UserPartialDTO(**user_dict)
 
 @router.post("/signup")
 async def signup(

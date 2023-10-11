@@ -35,8 +35,8 @@ class UserModel(TimeStampedModel):
         self.email = kwargs.get('email')
         self.description = kwargs.get('description')
 
-        place_of_origin = PlaceModel(**kwargs.get('place_of_origin'))
-        current_location = PlaceModel(**kwargs.get('current_location'))
+        place_of_origin = PlaceModel(**kwargs.get('place_of_origin')) if kwargs.get('place_of_origin') is not None else None
+        current_location = PlaceModel(**kwargs.get('current_location')) if kwargs.get('current_location') is not None else None
         past_locations = kwargs.get('past_locations', [])
         occupations = kwargs.get('occupations', [])
         interests = kwargs.get('interests', [])
@@ -53,4 +53,6 @@ class UserModel(TimeStampedModel):
             self.interests = interests
     
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        user_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        user_dict['id'] = str(user_dict['id'])
+        return user_dict
