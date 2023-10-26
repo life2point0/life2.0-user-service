@@ -141,8 +141,10 @@ def update_current_user(
     existing_user: UserModel = db.query(UserModel).filter(UserModel.id == user_id).first()
     user: UserModel
     logging.info('[Existing User]', existing_user)
+    data_dict = user_data.model_dump()
+    data_dict['occupations'] = None # TODO: Remove this
+    data_dict['past_locations'] = None # TODO: Remove this
     if existing_user is None:
-        data_dict = user_data.model_dump()
         user = UserModel(**data_dict)
         setattr(user, 'id', keycloak_user['id'])
         setattr(user, 'email', keycloak_user['email'])
@@ -153,10 +155,7 @@ def update_current_user(
         db.add(user)
         logging.info('[User]', user.as_dict())
     else:    
-        data_dict = user_data.model_dump()
         logging.info(data_dict)
-        data_dict['occupations'] = None # TODO: Remove this
-        data_dict['past_locations'] = None # TODO: Remove this
         for key, value in data_dict.items():
             if value is not None and hasattr(existing_user, key) and not isinstance(value, dict):
                 setattr(existing_user, key, value)
