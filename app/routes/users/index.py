@@ -156,6 +156,7 @@ def update_current_user(
         data_dict = user_data.model_dump()
         logging.info(data_dict)
         data_dict['occupations'] = None # TODO: Remove this
+        data_dict['pastLocations'] = None # TODO: Remove this
         for key, value in data_dict.items():
             if value is not None and hasattr(existing_user, key) and not isinstance(value, dict):
                 setattr(existing_user, key, value)
