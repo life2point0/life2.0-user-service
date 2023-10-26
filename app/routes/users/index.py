@@ -155,6 +155,7 @@ def update_current_user(
     else:    
         data_dict = user_data.model_dump()
         logging.info(data_dict)
+        data_dict['occupations'] = None # TODO: Remove this
         for key, value in data_dict.items():
             if value is not None and hasattr(existing_user, key) and not isinstance(value, dict):
                 setattr(existing_user, key, value)
