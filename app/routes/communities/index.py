@@ -1,22 +1,21 @@
 import logging
 from fastapi import APIRouter, HTTPException, Request
 import requests
-from app.constants import COMETCHAT_BASE_URL, COMETCHAT_KEY
+from app.constants import STREAM_ACCESS_KEY_ID, STREAM_SECRET_ACCESS_KEY
+from stream_chat import StreamChat
+
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
 
 @router.get("")
-def community_list(request: Request):
+def community_list():
     try:
-        res = requests.get(
-            f"{COMETCHAT_BASE_URL}/groups",
-            headers={
-                "ApiKey": COMETCHAT_KEY
-            },
-            params=request.query_params,
-        )
-        return res.json()
+        client = StreamChat(api_key=STREAM_ACCESS_KEY_ID, api_secret=STREAM_SECRET_ACCESS_KEY)
+        filter_conditions = {"type": "community"}
+        sort = {"created_at": -1}
+        response = client.query_channels(filter_conditions, sort=sort)
+        return response["channels"]
     except HTTPException as e:
         logging.error(e)
         raise e

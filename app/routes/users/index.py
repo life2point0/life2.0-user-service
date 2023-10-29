@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException, Header, Depends, Request
 from jose import jwt
 from pydantic import BaseModel, ValidationError
 import requests
-from app.constants import KEYCLOAK_URL, KEYCLOAK_REALM, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, COMETCHAT_BASE_URL, COMETCHAT_KEY
+from app.constants import KEYCLOAK_URL, KEYCLOAK_REALM, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, STREAM_ACCESS_KEY_ID, STREAM_SECRET_ACCESS_KEY
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError
 from .dto import TokenDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO
 import logging
 import json
-from sqlalchemy import UUID
+from stream_chat import StreamChat
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -23,6 +23,8 @@ keycloak_admin = KeycloakAdmin(
 )
 
 keycloak_admin.token
+
+streamChat = StreamChat(api_key=STREAM_ACCESS_KEY_ID, api_secret=STREAM_SECRET_ACCESS_KEY)
 
 # TODO: Remove need for this. Use a locally stored key
 def get_key_from_jwks(kid):
@@ -71,49 +73,18 @@ def get_user_by_user_id(db: DatabaseSession, user_id: str):
         return user.as_dict()
     return get_keycloak_user(user_id)
 
-def create_cometchat_user(user: UserPartialDTO):
-    phoneNumber = f"+{user.phone_country_code}" + user.phone_number if user.phone_country_code else user.phone_number
+def create_streamchat_user(user: UserPartialDTO):
     try:
-        res = requests.post(
-            f"{COMETCHAT_BASE_URL}/users",
-            headers={
-                "ApiKey": COMETCHAT_KEY
-            },
-            json={
-                "name": user.first_name,
-                "uid": user.id,
-                "metadata": {
-                    "@private": {
-                        "contactNumber": phoneNumber,
-                        "email": user.email
-                    }
-                }
-            }
-        )
-        return res.json()
+        user_data = {
+            "id": user.id,
+            "name": f"{user.first_name} {user.last_name}",
+            "role": "user"
+        }
+        streamChat.update_user(user_data)
     except HTTPException as e:
         logging.error(e)
         raise e
 
-def add_user_to_cometchat_group(user_id: str, group_id: str):
-    print('add_user_to_cometchat_group', user_id, group_id, {
-                "participants": [user_id]
-            })
-    try:
-        res = requests.post(
-            f"{COMETCHAT_BASE_URL}/groups/{group_id}/members",
-            headers={
-                "ApiKey": COMETCHAT_KEY
-            },
-            json={
-                "participants": [user_id]
-            }
-        )
-        return res.json()
-    except HTTPException as e:
-        logging.error(e)
-        raise e
-    
 def update_place_attribute(user, attribute_name, data_dict, db):
     if attribute_name in data_dict and data_dict[attribute_name] is not None:
         existing_place = db.query(PlaceModel).filter(PlaceModel.id == data_dict[attribute_name]['id']).first()
@@ -126,7 +97,6 @@ def update_place_attribute(user, attribute_name, data_dict, db):
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
     return get_user_by_user_id(db, user_id=token_data.sub)
-
 
 @router.put("/me")
 def update_current_user(
@@ -166,7 +136,7 @@ def update_current_user(
     db.commit()
     db.refresh(user)
     user_dict= {**user.as_dict(), "id": str(user.id)}
-    create_cometchat_user(UserPartialDTO(**user_dict))
+    create_streamchat_user(UserPartialDTO(**user_dict))
     logging.info('[SUCCESS]')
     return UserPartialDTO(**user_dict)
 
@@ -196,4 +166,24 @@ async def signup(
 
 @router.post('/me/communities')
 def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard)):
-    return add_user_to_cometchat_group(token_data.sub, payload.community_id)
+    channel = streamChat.channel("community", payload.community_id)
+    channel.add_members([token_data.sub])
+
+
+@router.get('/me/communities')
+def join_community(token_data: TokenDTO = Depends(jwt_guard)):
+    filter_conditions = {
+        "type": "community",
+        "members": {"$in": [token_data.sub]}
+    }
+    sort = {"created_at": -1}
+    response = streamChat.query_channels(filter_conditions, sort=sort)
+    return response
+
+
+@router.get('/me/tokens')
+def join_community(token_data: TokenDTO = Depends(jwt_guard)):
+    token = streamChat.create_token(token_data.sub)
+    return {
+        "streamChat": token
+    }
