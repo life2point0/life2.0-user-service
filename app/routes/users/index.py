@@ -10,6 +10,7 @@ from .dto import TokenDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO
 import logging
 import json
 from stream_chat import StreamChat
+import datetime
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -183,7 +184,12 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
 
 @router.get('/me/tokens')
 def join_community(token_data: TokenDTO = Depends(jwt_guard)):
-    token = streamChat.create_token(token_data.sub)
+    now = datetime.datetime.utcnow()
+    token = streamChat.create_token(
+        token_data.sub, 
+        iat = now,
+        exp = now + datetime.timedelta(hours=1)
+    )
     return {
         "streamChat": token
     }
