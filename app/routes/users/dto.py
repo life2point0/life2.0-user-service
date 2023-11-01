@@ -39,8 +39,8 @@ class UserPartialDTO(BaseModel):
     past_locations: Optional[List[PlaceDTO]] = []
     current_location: Optional[PlaceDTO] = None
     description: Optional[str] = Field(None, max_length=600)
-    occupations: Optional[List[str]] = []
-    interests: Optional[List[str]] = []
+    occupations: Optional[List[any]] = []
+    interests: Optional[List[any]] = []
 
     class Config:
         alias_generator = to_camel
