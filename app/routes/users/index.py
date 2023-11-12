@@ -219,6 +219,7 @@ def get_signed_upload_url(_: TokenDTO = Depends(jwt_guard)) -> PhotoUploadUrlDTO
             Params={
                 'Bucket': MEDIA_UPLOAD_BUCKET,
                 'Key': object_key,
+                'ContentType': 'image/jpeg'
             },
             ExpiresIn=MEDIA_UPLOAD_URL_VALIDITY
         )
