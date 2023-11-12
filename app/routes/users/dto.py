@@ -10,6 +10,13 @@ app = FastAPI()
 
 NAME_REGEX = "^[a-zA-Z .]+$"
 
+class ConfigBase:
+    alias_generator = to_camel
+    populate_by_name = True
+    json_encoders = {
+        UUID: lambda v: str(v)
+    }
+
 class UserDTO(BaseModel):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)
     last_name: str = Field(..., example="Smith", pattern=NAME_REGEX)
@@ -23,9 +30,8 @@ class UserDTO(BaseModel):
     occupations: List[str]
     interests: List[str] = []
 
-    class Config:
-        alias_generator = to_camel
-        populate_by_name = True
+    class Config(ConfigBase):
+        pass
 
 
 class UserPartialDTO(BaseModel):
@@ -42,12 +48,8 @@ class UserPartialDTO(BaseModel):
     occupations: Optional[List[object]] = []
     interests: Optional[List[object]] = []
 
-    class Config:
-        alias_generator = to_camel
-        populate_by_name = True
-        json_encoders = {
-            UUID: lambda v: str(v)
-        }
+    class Config(ConfigBase):
+        pass
 
 class UserSignupDTO(BaseModel):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)
@@ -55,18 +57,14 @@ class UserSignupDTO(BaseModel):
     email: EmailStr = None
     password: str
 
-    class Config:
-        alias_generator = to_camel
-        populate_by_name = True
+    class Config(ConfigBase):
+        pass
 
 class JoinCommunityDTO(BaseModel):
     community_id: str = Field(...)
-    class Config:
-        alias_generator = to_camel
-        populate_by_name = True
-        json_encoders = {
-            UUID: lambda v: str(v)
-        }
+
+    class Config(ConfigBase):
+        pass
 
 
 class TokenDTO(BaseModel):
@@ -84,4 +82,7 @@ class PhotoUploadUrlDTO(BaseModel):
     url: str
     key: str
     filename: Optional[str] = None
-    bucket_name: str
+    bucket: str
+
+    class Config(ConfigBase):
+        pass

@@ -227,7 +227,7 @@ def get_signed_upload_url(_: TokenDTO = Depends(jwt_guard)) -> PhotoUploadUrlDTO
             id=photo_id,
             url=url,
             key=object_key,
-            bucket_name=MEDIA_UPLOAD_BUCKET
+            bucket=MEDIA_UPLOAD_BUCKET
         )
     except Exception as e:
         logging.error(f"An error occurred: {e}")
