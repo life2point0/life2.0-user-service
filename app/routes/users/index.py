@@ -2,15 +2,28 @@ from fastapi import APIRouter, HTTPException, Header, Depends, Request
 from jose import jwt
 from pydantic import BaseModel, ValidationError
 import requests
-from app.constants import KEYCLOAK_URL, KEYCLOAK_REALM, KEYCLOAK_CLIENT_ID, KEYCLOAK_CLIENT_SECRET, STREAM_ACCESS_KEY_ID, STREAM_SECRET_ACCESS_KEY
+from app.constants import (
+    KEYCLOAK_URL, 
+    KEYCLOAK_REALM, 
+    KEYCLOAK_CLIENT_ID, 
+    KEYCLOAK_CLIENT_SECRET, 
+    STREAM_ACCESS_KEY_ID, 
+    STREAM_SECRET_ACCESS_KEY, 
+    MEDIA_UPLOAD_BUCKET, 
+    S3_ENDPOINT, 
+    AWS_DEFAULT_REGION,
+    MEDIA_UPLOAD_URL_VALIDITY
+)
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError
-from .dto import TokenDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO
+from .dto import TokenDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, PhotoUploadUrlDTO
 import logging
 import json
 from stream_chat import StreamChat
 import datetime
+import boto3
+from uuid import uuid4
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -193,3 +206,28 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
     return {
         "streamChat": token
     }
+
+
+@router.get('/me/photos/upload-url', tags=['Get Upload URLs'])
+def get_signed_upload_url(_: TokenDTO = Depends(jwt_guard)) -> PhotoUploadUrlDTO:
+    try: 
+        s3 = boto3.client('s3', endpoint_url=S3_ENDPOINT, region_name=AWS_DEFAULT_REGION)
+        photo_id = str(uuid4())
+        object_key = f"user-photos/{photo_id}.jpg"
+        url = s3.generate_presigned_url(
+            'put_object', 
+            Params={
+                'Bucket': MEDIA_UPLOAD_BUCKET,
+                'Key': object_key,
+            },
+            ExpiresIn=MEDIA_UPLOAD_URL_VALIDITY
+        )
+        return PhotoUploadUrlDTO(
+            id=photo_id,
+            url=url,
+            key=object_key,
+            bucket_name=MEDIA_UPLOAD_BUCKET
+        )
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        raise HTTPException(status_code=500)

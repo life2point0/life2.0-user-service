@@ -8,3 +8,4 @@ Requests==2.31.0
 SQLAlchemy==2.0.21
 pydantic[email]
 uvicorn==0.23.2
+boto3==1.28.73

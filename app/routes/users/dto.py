@@ -77,3 +77,11 @@ class TokenDTO(BaseModel):
     iat: int
     realm_access: dict
     resource_access: dict
+
+
+class PhotoUploadUrlDTO(BaseModel):
+    id: str
+    url: str
+    key: str
+    filename: Optional[str] = None
+    bucket_name: str
