@@ -175,4 +175,4 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
         "streamChat": token
     }
 
-router.include_router(user_photo_routes, prefix="/me/photos", tags=["photos"])
+router.include_router(user_photo_routes, prefix="/me/photos")

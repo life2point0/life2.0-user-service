@@ -19,7 +19,7 @@ class PhotoUploadUrlParams(BaseModel):
 
 user_photo_routes = APIRouter()
 
-@user_photo_routes.get('/upload-urls', tags=['Get Upload URLs'])
+@user_photo_routes.get('/upload-urls', description='Get Upload URLs')
 def get_signed_upload_url(
     params: PhotoUploadUrlParams = Depends(),
     _: TokenDTO = Depends(jwt_guard)

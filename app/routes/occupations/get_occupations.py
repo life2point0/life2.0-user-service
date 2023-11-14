@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 get_occupations_route = APIRouter()
 
-@get_occupations_route.get('', tags=['Occupation List'])
+@get_occupations_route.get('', description='Occupation List')
 def get_occupations(
     pagination_params: PaginationParams = Depends(),
     ids: Optional[str] = None,

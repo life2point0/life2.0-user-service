@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 create_skill_route = APIRouter()
 
-@create_skill_route.post('', response_model=IDNamePairResponseDTO, tags=['Create Skill'])
+@create_skill_route.post('', response_model=IDNamePairResponseDTO, description='Create Skill')
 async def get_skills(
     data: IDNamePairRequestDTO, 
     db: DatabaseSession = Depends(get_db),

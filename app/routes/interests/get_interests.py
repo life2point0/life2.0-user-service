@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 get_interests_route = APIRouter()
 
-@get_interests_route.get('', tags=['Interest List'])
+@get_interests_route.get('', description='Interest List')
 def get_interests(
     pagination_params: PaginationParams = Depends(),
     ids: Optional[str] = None,

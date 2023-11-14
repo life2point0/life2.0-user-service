@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 create_interest_route = APIRouter()
 
-@create_interest_route.post('', response_model=IDNamePairResponseDTO, tags=['Create Interest'])
+@create_interest_route.post('', response_model=IDNamePairResponseDTO, description="Get Interests")
 async def get_interests(
     data: IDNamePairRequestDTO, 
     db: DatabaseSession = Depends(get_db),

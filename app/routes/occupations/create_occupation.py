@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 create_occupation_route = APIRouter()
 
-@create_occupation_route.post('', response_model=IDNamePairResponseDTO, tags=['Create Occupation'])
+@create_occupation_route.post('', response_model=IDNamePairResponseDTO, description='Create Occupation')
 async def get_occupations(
     data: IDNamePairRequestDTO, 
     db: DatabaseSession = Depends(get_db),

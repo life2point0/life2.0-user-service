@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 get_skills_route = APIRouter()
 
-@get_skills_route.get('', tags=['Skill List'])
+@get_skills_route.get('', description='Skill List')
 def get_skills(
     pagination_params: PaginationParams = Depends(),
     ids: Optional[str] = None,
