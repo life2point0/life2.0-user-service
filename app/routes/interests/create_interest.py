@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Depends
+from fastapi import APIRouter, Depends, Depends
 from common.dto import IDNamePairRequestDTO, IDNamePairResponseDTO
 from app.models.interest import InterestModel
 from app.database import DatabaseSession, get_db
-from sqlalchemy.exc import SQLAlchemyError
-from common.util import handle_sqlalchemy_error
+from common.util import create_id_name_pair_row
 import logging
 from common.dto import TokenDTO
 from app.dependencies import jwt_guard
@@ -18,15 +17,4 @@ async def get_interests(
     db: DatabaseSession = Depends(get_db),
     _: TokenDTO = Depends(jwt_guard)
 ):
-    try:
-        interest = InterestModel(**data.model_dump())
-        db.add(interest)
-        db.commit()
-        db.refresh(interest)
-        return IDNamePairResponseDTO.model_validate(interest)
-    except SQLAlchemyError as e:
-        db.rollback()
-        handle_sqlalchemy_error(e)
-    except BaseException as e:
-        db.rollback()
-        raise HTTPException(status_code=500)
+    return create_id_name_pair_row(db, model=InterestModel, name=data.name)

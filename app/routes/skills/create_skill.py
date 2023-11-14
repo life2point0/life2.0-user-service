@@ -3,7 +3,7 @@ from common.dto import IDNamePairRequestDTO, IDNamePairResponseDTO
 from app.models.skill import SkillModel
 from app.database import DatabaseSession, get_db
 from sqlalchemy.exc import SQLAlchemyError
-from common.util import handle_sqlalchemy_error
+from common.util import create_id_name_pair_row
 import logging
 from common.dto import TokenDTO
 from app.dependencies import jwt_guard
@@ -18,15 +18,4 @@ async def get_skills(
     db: DatabaseSession = Depends(get_db),
     _: TokenDTO = Depends(jwt_guard)
 ):
-    try:
-        skill = SkillModel(**data.model_dump())
-        db.add(skill)
-        db.commit()
-        db.refresh(skill)
-        return IDNamePairResponseDTO.model_validate(skill)
-    except SQLAlchemyError as e:
-        db.rollback()
-        handle_sqlalchemy_error(e)
-    except BaseException as e:
-        db.rollback()
-        raise HTTPException(status_code=500)
+    return create_id_name_pair_row(db, model=SkillModel, name=data.name)
