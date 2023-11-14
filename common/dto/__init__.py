@@ -4,3 +4,4 @@ from .dto_config_base import ConfigBase
 from .token_data import TokenDTO
 from .base import BaseDTO
 from .paginated_response import PaginatedResponseDTO
+from .pagination_params import PaginationParams
