@@ -1,13 +1,14 @@
-from sqlalchemy import Column, String
-from sqlalchemy.dialects.postgresql import UUID
+from .id_name_pair import create_id_name_pair_model
 from .base import TimeStampedModel
-from uuid import uuid4
+from .association_tables import get_user_association_table
 from sqlalchemy.orm import relationship
-from .association_tables import user_interests_table
 
-class InterestModel(TimeStampedModel):
-    __tablename__ = 'interests'
+table_name = 'interests'
+singular_name = 'interest'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
-    name = Column(String, nullable=False)
-    users = relationship('UserModel', secondary=user_interests_table, back_populates='interests')
+IDNamePairModel = create_id_name_pair_model(table_name)
+
+user_interests_table = get_user_association_table(table_name, f'{singular_name}_id')
+
+class InterestModel(IDNamePairModel, TimeStampedModel):
+    users = relationship('UserModel', secondary=user_interests_table, back_populates=table_name)

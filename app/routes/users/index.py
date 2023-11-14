@@ -1,7 +1,4 @@
-from fastapi import APIRouter, HTTPException, Header, Depends, Request
-from jose import jwt
-from pydantic import BaseModel, ValidationError
-import requests
+from fastapi import APIRouter, HTTPException, Depends
 from app.constants import (
     KEYCLOAK_URL, 
     KEYCLOAK_REALM, 
@@ -17,13 +14,16 @@ from app.constants import (
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError
-from .dto import TokenDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, PhotoUploadUrlDTO
+from .dto import UserPartialDTO, UserSignupDTO, JoinCommunityDTO, PhotoUploadUrlDTO
 import logging
 import json
 from stream_chat import StreamChat
 import datetime
 import boto3
 from uuid import uuid4
+from app.dependencies import jwt_guard
+from common.dto import TokenDTO
+from .user_photos import user_photo_routes
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -40,15 +40,6 @@ keycloak_admin.token
 
 streamChat = StreamChat(api_key=STREAM_ACCESS_KEY_ID, api_secret=STREAM_SECRET_ACCESS_KEY)
 
-# TODO: Remove need for this. Use a locally stored key
-def get_key_from_jwks(kid):
-    jwks_url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
-    jwks = requests.get(jwks_url).json()
-    for jwk in jwks['keys']:
-        if jwk['kid'] == kid:
-            return jwk
-    raise Exception("Key not found")
-
 def get_keycloak_user(user_id: str):
     try:
         user = keycloak_admin.get_user(user_id)
@@ -57,29 +48,6 @@ def get_keycloak_user(user_id: str):
     except KeycloakGetError as e:
         logging.error(f"An error occurred: {e}")
         raise HTTPException(status_code=e.response_code, detail=e.response_body.decode('utf-8'))
- 
-def jwt_guard(authorization: str = Header(...)) -> TokenDTO:
-    prefix = "Bearer "
-    if not authorization.startswith(prefix):
-        raise HTTPException(status_code=401, detail="Invalid Authorization header")
-    
-    token = authorization[len(prefix):]
-    try:
-        header = jwt.get_unverified_header(token)
-        kid = header['kid']
-        public_key = get_key_from_jwks(kid)
-
-        decoded_token = jwt.decode(token, public_key, audience="account")
-        return TokenDTO(**decoded_token)
-
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-        
-    except jwt.JWTError as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
-        
-    except ValidationError as e:
-        raise HTTPException(status_code=401, detail="Token payload validation failed")
 
 def get_user_by_user_id(db: DatabaseSession, user_id: str):
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -207,28 +175,4 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
         "streamChat": token
     }
 
-
-@router.get('/me/photos/upload-url', tags=['Get Upload URLs'])
-def get_signed_upload_url(_: TokenDTO = Depends(jwt_guard)) -> PhotoUploadUrlDTO:
-    try: 
-        s3 = boto3.client('s3', endpoint_url=S3_ENDPOINT, region_name=AWS_DEFAULT_REGION)
-        photo_id = str(uuid4())
-        object_key = f"user-photos/{photo_id}.jpg"
-        url = s3.generate_presigned_url(
-            'put_object', 
-            Params={
-                'Bucket': MEDIA_UPLOAD_BUCKET,
-                'Key': object_key,
-                'ContentType': 'image/jpeg'
-            },
-            ExpiresIn=MEDIA_UPLOAD_URL_VALIDITY
-        )
-        return PhotoUploadUrlDTO(
-            id=photo_id,
-            url=url,
-            key=object_key,
-            bucket=MEDIA_UPLOAD_BUCKET
-        )
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise HTTPException(status_code=500)
+router.include_router(user_photo_routes, prefix="/me/photos", tags=["photos"])

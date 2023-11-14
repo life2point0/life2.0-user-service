@@ -1,6 +1,5 @@
 import logging
 from fastapi import APIRouter, HTTPException, Request
-import requests
 from app.constants import STREAM_ACCESS_KEY_ID, STREAM_SECRET_ACCESS_KEY
 from stream_chat import StreamChat
 

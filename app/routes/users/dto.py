@@ -1,23 +1,17 @@
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from pydantic import Field
 from typing import List, Optional
 from common.util import to_camel
 from pydantic import EmailStr
-from common.dto import PlaceDTO
+from common.dto import PlaceDTO, ConfigBase, BaseDTO
 from sqlalchemy import UUID
 
 app = FastAPI()
 
 NAME_REGEX = "^[a-zA-Z .]+$"
 
-class ConfigBase:
-    alias_generator = to_camel
-    populate_by_name = True
-    json_encoders = {
-        UUID: lambda v: str(v)
-    }
 
-class UserDTO(BaseModel):
+class UserDTO(BaseDTO):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)
     last_name: str = Field(..., example="Smith", pattern=NAME_REGEX)
     phone_country_code: str = Field(None, example="123456789", pattern="^\d{1,3}$")
@@ -30,11 +24,8 @@ class UserDTO(BaseModel):
     occupations: List[str]
     interests: List[str] = []
 
-    class Config(ConfigBase):
-        pass
 
-
-class UserPartialDTO(BaseModel):
+class UserPartialDTO(BaseDTO):
     id: Optional[str] = Field(None)
     first_name: Optional[str] = Field(None, example="John", pattern=NAME_REGEX)
     last_name: Optional[str] = Field(None, example="Smith", pattern=NAME_REGEX)
@@ -47,42 +38,23 @@ class UserPartialDTO(BaseModel):
     description: Optional[str] = Field(None, max_length=600)
     occupations: Optional[List[object]] = []
     interests: Optional[List[object]] = []
+    skills: Optional[List[object]] = []
+    languages: Optional[List[object]] = []
 
-    class Config(ConfigBase):
-        pass
-
-class UserSignupDTO(BaseModel):
+class UserSignupDTO(BaseDTO):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)
     last_name: str = Field(..., example="Smith", pattern=NAME_REGEX)
     email: EmailStr = None
     password: str
 
-    class Config(ConfigBase):
-        pass
-
-class JoinCommunityDTO(BaseModel):
+class JoinCommunityDTO(BaseDTO):
     community_id: str = Field(...)
 
-    class Config(ConfigBase):
-        pass
 
 
-class TokenDTO(BaseModel):
-    iss: str
-    sub: str
-    aud: str
-    exp: int
-    iat: int
-    realm_access: dict
-    resource_access: dict
-
-
-class PhotoUploadUrlDTO(BaseModel):
+class PhotoUploadUrlDTO(BaseDTO):
     id: str
     url: str
     key: str
     filename: Optional[str] = None
     bucket: str
-
-    class Config(ConfigBase):
-        pass

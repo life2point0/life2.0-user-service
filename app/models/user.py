@@ -3,8 +3,12 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import TimeStampedModel
 from uuid import uuid4
-from .association_tables import user_occupations_table, user_past_locations_table, user_interests_table
+from .association_tables import user_past_locations_table
 from .place import PlaceModel
+from .occupation import user_occupations_table
+from .skill import user_skills_table
+from .interest import user_interests_table
+from .language import user_languages_table
 
 
 class UserModel(TimeStampedModel):
@@ -26,6 +30,8 @@ class UserModel(TimeStampedModel):
     past_locations = relationship("PlaceModel", secondary=user_past_locations_table, back_populates="users_previously_here")
     occupations = relationship("OccupationModel", secondary=user_occupations_table, back_populates='users')
     interests = relationship("InterestModel", secondary=user_interests_table, back_populates='users')
+    skills = relationship("SkillModel", secondary=user_skills_table, back_populates='users')
+    languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
 
     def __init__(self, **kwargs):
         self.first_name = kwargs.get('first_name')

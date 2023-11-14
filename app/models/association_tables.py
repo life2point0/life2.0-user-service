@@ -1,19 +1,18 @@
-from sqlalchemy import Column, ForeignKey, Integer, Table
+from sqlalchemy import Column, ForeignKey, PrimaryKeyConstraint, Table
 from .base import date_columns, TimeStampedModel
 from sqlalchemy.dialects.postgresql import UUID
 
 
-user_occupations_table = Table('user_occupations', TimeStampedModel.metadata,
-    Column('user_id', UUID, ForeignKey('users.id'), primary_key=True),
-    Column('occupation_id', UUID, ForeignKey('occupations.id'), primary_key=True),
-)
+def get_user_association_table(associate_table: str, associate_key: str = 'associate_id'):
+    return Table(
+        f'user_{associate_table}', 
+        TimeStampedModel.metadata,
+        Column('user_id', UUID, ForeignKey('users.id'), primary_key=True),
+        Column(associate_key, UUID, ForeignKey(f'{associate_table}.id'), primary_key=True),
+        PrimaryKeyConstraint('user_id', associate_key, name=f'pk_users_{associate_table}')
+    )
 
 user_past_locations_table = Table('user_past_locations', TimeStampedModel.metadata,
     Column('user_id', UUID, ForeignKey('users.id'), primary_key=True),
     Column('place_id', UUID, ForeignKey('places.id'), primary_key=True),
-)
-
-user_interests_table = Table('user_interests', TimeStampedModel.metadata,
-    Column('user_id', UUID, ForeignKey('users.id'), primary_key=True),
-    Column('interest_id', UUID, ForeignKey('interests.id'), primary_key=True),
 )
