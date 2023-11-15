@@ -33,6 +33,7 @@ class UserModel(TimeStampedModel):
     languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
 
     def __init__(self, **kwargs):
+        self.id = kwargs.get('id')
         self.first_name = kwargs.get('first_name')
         self.last_name = kwargs.get('last_name')
         self.phone_country_code = kwargs.get('phone_country_code')

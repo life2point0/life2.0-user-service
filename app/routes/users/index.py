@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import SQLAlchemyError
 from app.constants import (
     KEYCLOAK_URL, 
     KEYCLOAK_REALM, 
@@ -19,7 +21,7 @@ from app.dependencies import jwt_guard
 from common.dto import TokenDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel
-from common.util import get_multi_rows, get_place, get_places
+from common.util import get_multi_rows, get_place, get_places, handle_sql_alchemy_error
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -46,12 +48,28 @@ def get_keycloak_user(user_id: str):
         raise HTTPException(status_code=e.response_code, detail=e.response_body.decode('utf-8'))
 
 def get_user_by_user_id(db: DatabaseSession, user_id: str):
-    user = db.query(UserModel).filter(UserModel.id == user_id).first()
-    if user is not None:
-        return user.as_dict()
-    return get_keycloak_user(user_id)
+    user = (
+        db.query(UserModel)
+            .options(
+                joinedload(UserModel.place_of_origin),
+                joinedload(UserModel.current_location),
+                joinedload(UserModel.past_locations),
+                joinedload(UserModel.occupations),
+                joinedload(UserModel.interests),
+                joinedload(UserModel.skills),
+                joinedload(UserModel.languages),
+            )
+            .filter(UserModel.id == user_id)
+            .first()
+    )
 
-def create_streamchat_user(user: UserPartialDTO):
+    if user is None:
+        return get_keycloak_user(user_id)
+    
+    return user
+
+
+def upsert_streamchat_user(user: UserModel):
     try:
         user_data = {
             "id": str(user.id),
@@ -63,61 +81,53 @@ def create_streamchat_user(user: UserPartialDTO):
         logging.error(e)
         raise e
 
-def update_place_attribute(user, attribute_name, data_dict, db):
-    if attribute_name in data_dict and data_dict[attribute_name] is not None:
-        existing_place = db.query(PlaceModel).filter(PlaceModel.id == data_dict[attribute_name]['id']).first()
-        if existing_place:
-            setattr(user, attribute_name, existing_place)
-        else:
-            new_place = PlaceModel(**data_dict[attribute_name])
-            setattr(user, attribute_name, new_place)
+def replace_user_relations(db: DatabaseSession, user_dict: dict):
+    user_dict['occupations'] = get_multi_rows(db, OccupationModel, values=user_dict['occupations'], strict=True)
+    user_dict['skills'] = get_multi_rows(db, SkillModel, values=user_dict['skills'], strict=True)
+    user_dict['interests'] = get_multi_rows(db, InterestModel, values=user_dict['interests'], strict=True)
+    user_dict['languages'] = get_multi_rows(db, LanguageModel, values=user_dict['languages'], strict=True)
+    user_dict['current_location'] = get_place(db, place_id=user_dict['current_location'])
+    user_dict['place_of_origin'] = get_place(db, place_id=user_dict['place_of_origin'])
+    user_dict['past_locations'] = get_places(db, place_ids=user_dict['past_locations'])
 
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
     return get_user_by_user_id(db, user_id=token_data.sub)
 
-@router.put("/me")
+@router.patch("/me")
 def update_current_user(
         user_data: UserUpdateDTO,
         token_data: TokenDTO = Depends(jwt_guard), 
         db: DatabaseSession = Depends(get_db)
     ) -> UserPartialDTO:
     user_id = token_data.sub
-    keycloak_user = get_keycloak_user(user_id)
-    if keycloak_user is None:
-        raise HTTPException(status_code=404, detail='User not found')
-    existing_user: UserModel = db.query(UserModel).filter(UserModel.id == user_id).first()
-    user: UserModel
-    data_dict = user_data.model_dump()
-    if existing_user is None:
-        user = UserModel(**data_dict)
-        setattr(user, 'id', keycloak_user['id'])
-        setattr(user, 'email', keycloak_user['email'])
-        setattr(user, 'first_name', keycloak_user['firstName'])
-        setattr(user, 'last_name', keycloak_user['lastName'])
-        update_place_attribute(user, 'place_of_origin', data_dict, db)
-        update_place_attribute(user, 'current_location', data_dict, db)
-        db.add(user)
-        logging.info('[User]', user.as_dict())
-    else:    
-        data_dict['occupations'] = get_multi_rows(db, OccupationModel, values=data_dict['occupations'], strict=True)
-        data_dict['skills'] = get_multi_rows(db, SkillModel, values=data_dict['skills'], strict=True)
-        data_dict['interests'] = get_multi_rows(db, InterestModel, values=data_dict['interests'], strict=True)
-        data_dict['languages'] = get_multi_rows(db, LanguageModel, values=data_dict['languages'], strict=True)
-        data_dict['current_location'] = get_place(db, place_id=data_dict['current_location'])
-        data_dict['place_of_origin'] = get_place(db, place_id=data_dict['place_of_origin'])
-        data_dict['past_locations'] = get_places(db, place_ids=data_dict['past_locations'])
-        for key, value in data_dict.items():
-            if value is not None and hasattr(existing_user, key) and not isinstance(value, dict):
-                setattr(existing_user, key, value)
-        # TODO: Write similar logic for places previously lived
-        user = existing_user
-    db.commit()
-    db.refresh(user)
-    res = UserPartialDTO.model_validate(user)
-    create_streamchat_user(res)
-    logging.info('[SUCCESS]')
-    return res
+    try:
+        user: UserModel = db.query(UserModel).filter(UserModel.id == user_id).first()
+        is_new = user is None
+        if is_new:
+            keycloak_user = get_keycloak_user(user_id)
+            logging.info(keycloak_user['id'])
+            if keycloak_user is None:
+                raise HTTPException(status_code=404, detail='User not found')
+            user = UserModel(
+                id = keycloak_user['id'],
+                email = keycloak_user['email'],
+                first_name = keycloak_user['firstName'],
+                last_name = keycloak_user['lastName'],
+            )
+            db.add(user)
+        user_dict = user_data.model_dump()
+        replace_user_relations(db, user_dict)
+        for key, value in user_dict.items():
+            if value is not None and hasattr(user, key) and not isinstance(value, dict):
+                setattr(user, key, value)
+        if is_new or user_dict['first_name'] is not None or user_dict['last_name']:
+            upsert_streamchat_user(user)
+        db.commit()
+        db.refresh(user)
+        return user
+    except SQLAlchemyError as e:
+        handle_sql_alchemy_error(e)
 
 @router.post("/signup")
 async def signup(
