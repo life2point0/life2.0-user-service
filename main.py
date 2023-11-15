@@ -5,6 +5,7 @@ from app.routes.health import health_router
 from app.routes.occupations import occupations_router
 from app.routes.skills import skills_router
 from app.routes.interests import interests_router
+from app.routes.languages import languages_router
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.openapi.utils import get_openapi
 
@@ -48,3 +49,6 @@ app.include_router(skills_router, tags=['skills'])
 
 # /interests
 app.include_router(interests_router, tags=['interests'])
+
+# /languages
+app.include_router(languages_router, tags=['languages'])
