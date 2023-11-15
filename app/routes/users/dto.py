@@ -3,8 +3,8 @@ from pydantic import Field
 from typing import List, Optional
 from common.util import to_camel
 from pydantic import EmailStr
-from common.dto import PlaceDTO, ConfigBase, BaseDTO
-from sqlalchemy import UUID
+from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO
+from uuid import UUID
 
 app = FastAPI()
 
@@ -26,7 +26,7 @@ class UserDTO(BaseDTO):
 
 
 class UserPartialDTO(BaseDTO):
-    id: Optional[str] = Field(None)
+    id: UUID = Field(None)
     first_name: Optional[str] = Field(None, example="John", pattern=NAME_REGEX)
     last_name: Optional[str] = Field(None, example="Smith", pattern=NAME_REGEX)
     phone_country_code: Optional[str] = Field(None, example="123456789", pattern="^\d{1,3}$")
@@ -36,10 +36,18 @@ class UserPartialDTO(BaseDTO):
     past_locations: Optional[List[PlaceDTO]] = []
     current_location: Optional[PlaceDTO] = None
     description: Optional[str] = Field(None, max_length=600)
-    occupations: Optional[List[object]] = []
-    interests: Optional[List[object]] = []
-    skills: Optional[List[object]] = []
-    languages: Optional[List[object]] = []
+    occupations: Optional[List[IDNamePairResponseDTO]] = []
+    interests: Optional[List[IDNamePairResponseDTO]] = []
+    skills: Optional[List[IDNamePairResponseDTO]] = []
+    languages: Optional[List[IDNamePairResponseDTO]] = []
+
+class UserUpdateDTO(UserPartialDTO):
+    id: Optional[UUID] = Field(None)
+    occupations: Optional[List[UUID]] = []
+    interests: Optional[List[UUID]] = []
+    skills: Optional[List[UUID]] = []
+    languages: Optional[List[UUID]] = []
+    past_locations: Optional[List[PlaceDTO]] = []
 
 class UserSignupDTO(BaseDTO):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)

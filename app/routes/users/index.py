@@ -5,25 +5,21 @@ from app.constants import (
     KEYCLOAK_CLIENT_ID, 
     KEYCLOAK_CLIENT_SECRET, 
     STREAM_ACCESS_KEY_ID, 
-    STREAM_SECRET_ACCESS_KEY, 
-    MEDIA_UPLOAD_BUCKET, 
-    S3_ENDPOINT, 
-    AWS_DEFAULT_REGION,
-    MEDIA_UPLOAD_URL_VALIDITY
+    STREAM_SECRET_ACCESS_KEY
 )
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError
-from .dto import UserPartialDTO, UserSignupDTO, JoinCommunityDTO, PhotoUploadUrlDTO
+from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO
 import logging
 import json
 from stream_chat import StreamChat
 import datetime
-import boto3
-from uuid import uuid4
 from app.dependencies import jwt_guard
 from common.dto import TokenDTO
 from .user_photos import user_photo_routes
+from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel
+from common.util import get_multi_rows
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -58,7 +54,7 @@ def get_user_by_user_id(db: DatabaseSession, user_id: str):
 def create_streamchat_user(user: UserPartialDTO):
     try:
         user_data = {
-            "id": user.id,
+            "id": str(user.id),
             "name": f"{user.first_name} {user.last_name}",
             "role": "user"
         }
@@ -82,7 +78,7 @@ def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSess
 
 @router.put("/me")
 def update_current_user(
-        user_data: UserPartialDTO,
+        user_data: UserUpdateDTO,
         token_data: TokenDTO = Depends(jwt_guard), 
         db: DatabaseSession = Depends(get_db)
     ) -> UserPartialDTO:
@@ -94,7 +90,6 @@ def update_current_user(
     user: UserModel
     logging.info('[Existing User]', existing_user)
     data_dict = user_data.model_dump()
-    data_dict['occupations'] = None # TODO: Remove this
     data_dict['past_locations'] = None # TODO: Remove this
     if existing_user is None:
         user = UserModel(**data_dict)
@@ -107,7 +102,10 @@ def update_current_user(
         db.add(user)
         logging.info('[User]', user.as_dict())
     else:    
-        logging.info(data_dict)
+        data_dict['occupations'] = get_multi_rows(db, OccupationModel, values=data_dict['occupations'], strict=True)
+        data_dict['skills'] = get_multi_rows(db, SkillModel, values=data_dict['skills'], strict=True)
+        data_dict['interests'] = get_multi_rows(db, InterestModel, values=data_dict['interests'], strict=True)
+        data_dict['languages'] = get_multi_rows(db, LanguageModel, values=data_dict['languages'], strict=True)
         for key, value in data_dict.items():
             if value is not None and hasattr(existing_user, key) and not isinstance(value, dict):
                 setattr(existing_user, key, value)
@@ -117,10 +115,10 @@ def update_current_user(
         user = existing_user
     db.commit()
     db.refresh(user)
-    user_dict= {**user.as_dict(), "id": str(user.id)}
-    create_streamchat_user(UserPartialDTO(**user_dict))
+    res = UserPartialDTO.model_validate(user)
+    create_streamchat_user(res)
     logging.info('[SUCCESS]')
-    return UserPartialDTO(**user_dict)
+    return res
 
 @router.post("/signup")
 async def signup(

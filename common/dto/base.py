@@ -1,11 +1,9 @@
 from pydantic import BaseModel, validator
-from common.util import to_camel
+from .dto_config_base import ConfigBase
 
 class BaseDTO(BaseModel):
-    class Config:
-        alias_generator = to_camel
-        populate_by_name = True
-        from_attributes = True
+    class Config(ConfigBase):
+        pass
 
     @classmethod
     def trim_string(cls, value):
