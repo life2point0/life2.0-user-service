@@ -18,9 +18,10 @@ def create_id_name_pair_row(
         name: str,
     ):
     try:
-        row = db.query(model).filter(model.name == name).first()
+        normalized_name = ' '.join(name.split()).title()
+        row = db.query(model).filter(model.name == normalized_name).first()
         if row is None:
-            row = model(name=name)
+            row = model(name=normalized_name)
             db.add(row)
             db.commit()
             db.refresh(row)
