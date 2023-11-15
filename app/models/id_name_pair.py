@@ -11,8 +11,8 @@ def create_id_name_pair_model(table_name: str):
         name = Column(CITEXT(), nullable=False)    
 
         __table_args__ = (
-            PrimaryKeyConstraint('id', name=f'pk_{table_name}_id'),
-            UniqueConstraint('id', name=f'uq_{table_name}_id'),
-            UniqueConstraint('name', name=f'uq_{table_name}_name'),
+            PrimaryKeyConstraint('id', name=f'pk__{table_name}__id'),
+            UniqueConstraint('id', name=f'uq__{table_name}__id'),
+            UniqueConstraint('name', name=f'uq__{table_name}__name'),
         )
     return IDNamePairModel

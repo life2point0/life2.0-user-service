@@ -1,11 +1,11 @@
 from fastapi import HTTPException
 from sqlalchemy import case
-from sqlalchemy.orm import Session as DatabaseSession
+from sqlalchemy.orm import Session
 from typing import Type, List, Optional
 from app.models import BaseModel  # Ensure you have the correct import path
 
 def get_multi_rows(
-    db: DatabaseSession,
+    db: Session,
     Model: Type[BaseModel],
     values: Optional[List[str]] = None,
     strict: Optional[bool] = False,
@@ -27,9 +27,14 @@ def get_multi_rows(
         # If strict mode is on, ensure all values have corresponding rows
         if strict and len(rows) != len(values):
             missing_values = set(values) - {str(row.id) for row in rows}
+            message = ''
+            if len(missing_values) > 0:
+                message = f"Some {Model.__tablename__} were not recognized: {missing_values}"
+            else:
+                message = f"Duplicate values provided for {Model.__tablename__}"
             raise HTTPException(
                 status_code=400, 
-                detail=f"Some {Model.__tablename__} were not recognized: {missing_values}"
+                detail=message
             )
 
         return rows

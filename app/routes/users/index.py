@@ -19,7 +19,7 @@ from app.dependencies import jwt_guard
 from common.dto import TokenDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel
-from common.util import get_multi_rows
+from common.util import get_multi_rows, get_place, get_places
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -88,9 +88,7 @@ def update_current_user(
         raise HTTPException(status_code=404, detail='User not found')
     existing_user: UserModel = db.query(UserModel).filter(UserModel.id == user_id).first()
     user: UserModel
-    logging.info('[Existing User]', existing_user)
     data_dict = user_data.model_dump()
-    data_dict['past_locations'] = None # TODO: Remove this
     if existing_user is None:
         user = UserModel(**data_dict)
         setattr(user, 'id', keycloak_user['id'])
@@ -106,11 +104,12 @@ def update_current_user(
         data_dict['skills'] = get_multi_rows(db, SkillModel, values=data_dict['skills'], strict=True)
         data_dict['interests'] = get_multi_rows(db, InterestModel, values=data_dict['interests'], strict=True)
         data_dict['languages'] = get_multi_rows(db, LanguageModel, values=data_dict['languages'], strict=True)
+        data_dict['current_location'] = get_place(db, place_id=data_dict['current_location'])
+        data_dict['place_of_origin'] = get_place(db, place_id=data_dict['place_of_origin'])
+        data_dict['past_locations'] = get_places(db, place_ids=data_dict['past_locations'])
         for key, value in data_dict.items():
             if value is not None and hasattr(existing_user, key) and not isinstance(value, dict):
                 setattr(existing_user, key, value)
-        update_place_attribute(existing_user, 'place_of_origin', data_dict, db)
-        update_place_attribute(existing_user, 'current_location', data_dict, db)
         # TODO: Write similar logic for places previously lived
         user = existing_user
     db.commit()

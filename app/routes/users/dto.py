@@ -43,11 +43,13 @@ class UserPartialDTO(BaseDTO):
 
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)
-    occupations: Optional[List[UUID]] = []
-    interests: Optional[List[UUID]] = []
-    skills: Optional[List[UUID]] = []
-    languages: Optional[List[UUID]] = []
-    past_locations: Optional[List[PlaceDTO]] = []
+    current_location: Optional[str] = None
+    place_of_origin: Optional[str] = None
+    past_locations: Optional[List[str]] = None
+    occupations: Optional[List[UUID]] = None
+    interests: Optional[List[UUID]] = None
+    skills: Optional[List[UUID]] = None
+    languages: Optional[List[UUID]] = None
 
 class UserSignupDTO(BaseDTO):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)

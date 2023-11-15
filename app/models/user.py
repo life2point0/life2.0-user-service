@@ -3,8 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import TimeStampedModel
 from uuid import uuid4
-from .association_tables import user_past_locations_table
-from .place import PlaceModel
+from .place import PlaceModel, user_past_locations_table
 from .occupation import user_occupations_table
 from .skill import user_skills_table
 from .interest import user_interests_table
