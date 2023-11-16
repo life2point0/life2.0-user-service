@@ -25,6 +25,10 @@ class UserDTO(BaseDTO):
     interests: List[str] = []
 
 
+class PhotoDTO(BaseDTO):
+    id: UUID
+    url: Optional[str] = Field('')
+
 class UserPartialDTO(BaseDTO):
     id: UUID = Field(None)
     first_name: Optional[str] = Field(None, example="John", pattern=NAME_REGEX)
@@ -40,6 +44,7 @@ class UserPartialDTO(BaseDTO):
     interests: Optional[List[IDNamePairResponseDTO]] = []
     skills: Optional[List[IDNamePairResponseDTO]] = []
     languages: Optional[List[IDNamePairResponseDTO]] = []
+    photos: Optional[List[PhotoDTO]]
 
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)
@@ -50,6 +55,7 @@ class UserUpdateDTO(UserPartialDTO):
     interests: Optional[List[UUID]] = None
     skills: Optional[List[UUID]] = None
     languages: Optional[List[UUID]] = None
+    photos: Optional[List[UUID]] = None
 
 class UserSignupDTO(BaseDTO):
     first_name: str = Field(..., example="John", pattern=NAME_REGEX)
@@ -60,11 +66,3 @@ class UserSignupDTO(BaseDTO):
 class JoinCommunityDTO(BaseDTO):
     community_id: str = Field(...)
 
-
-
-class PhotoUploadUrlDTO(BaseDTO):
-    id: str
-    url: str
-    key: str
-    filename: Optional[str] = None
-    bucket: str

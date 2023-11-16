@@ -8,6 +8,13 @@ from .occupation import user_occupations_table
 from .skill import user_skills_table
 from .interest import user_interests_table
 from .language import user_languages_table
+from .association_tables import get_user_association_table
+
+user_photos_table = get_user_association_table(
+    'files', 
+    associate_key='photo_id', 
+    association_table_name='user_photos'
+)
 
 
 class UserModel(TimeStampedModel):
@@ -31,6 +38,7 @@ class UserModel(TimeStampedModel):
     interests = relationship("InterestModel", secondary=user_interests_table, back_populates='users')
     skills = relationship("SkillModel", secondary=user_skills_table, back_populates='users')
     languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
+    photos = relationship("FileModel", secondary=user_photos_table)
 
     def __init__(self, **kwargs):
         self.id = kwargs.get('id')
