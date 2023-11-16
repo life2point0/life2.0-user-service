@@ -16,7 +16,7 @@ class FileModel(TimeStampedModel):
     cdn_host = Column(String, nullable=False)
 
     __table_args__ = (
-        PrimaryKeyConstraint('id', name='pk__files'),
+        PrimaryKeyConstraint('id', name='pk__files__id'),
     )
 
     @hybrid_property

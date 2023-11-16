@@ -44,7 +44,7 @@ class UserPartialDTO(BaseDTO):
     interests: Optional[List[IDNamePairResponseDTO]] = []
     skills: Optional[List[IDNamePairResponseDTO]] = []
     languages: Optional[List[IDNamePairResponseDTO]] = []
-    photos: Optional[List[PhotoDTO]]
+    photos: Optional[List[PhotoDTO]] = []
 
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)

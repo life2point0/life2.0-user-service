@@ -8,8 +8,8 @@ def get_user_association_table(associated_table: str, associate_key: str = 'asso
     return Table(
         association_table, 
         TimeStampedModel.metadata,
-        Column('user_id', UUID, ForeignKey('users.id', name=f'fk__{association_table}__user_id'), primary_key=True),
-        Column(associate_key, UUID, ForeignKey(f'{associated_table}.id', name=f'fk__{association_table}__{associate_key}'), primary_key=True),
+        Column('user_id', UUID, ForeignKey('users.id', name=f'fk__{association_table}.user_id__users.id'), primary_key=True),
+        Column(associate_key, UUID, ForeignKey(f'{associated_table}.id', name=f'fk__{association_table}.{associate_key}__{associated_table}.id'), primary_key=True),
         Column('user_preferred_sort_order', Integer, nullable=True, default=None),
-        PrimaryKeyConstraint('user_id', associate_key, name=f'pk__users__{associated_table}')
+        PrimaryKeyConstraint('user_id', associate_key, name=f'pk__{association_table}__user_id__{associate_key}')
     )
