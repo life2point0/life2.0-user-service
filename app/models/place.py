@@ -16,7 +16,7 @@ class PlaceModel(TimeStampedModel):
     geolocation = Column(Geometry(geometry_type='POINT'), nullable=False)
     additional_details = Column(JSON, nullable=True)
     users_originally_from_here = relationship("UserModel", foreign_keys="UserModel.place_of_origin_id")
-    users_currently_here = relationship("UserModel", foreign_keys="UserModel.current_location_id")
+    users_currently_here = relationship("UserModel", foreign_keys="UserModel.current_place_id")
     users_previously_here = relationship("UserModel", secondary=user_past_locations_table, back_populates='past_locations')
 
     def __init__(self, **kwargs):

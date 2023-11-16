@@ -55,7 +55,7 @@ def get_user_by_user_id(db: DatabaseSession, user_id: str):
         db.query(UserModel)
             .options(
                 joinedload(UserModel.place_of_origin),
-                joinedload(UserModel.current_location),
+                joinedload(UserModel.current_place),
                 joinedload(UserModel.past_locations),
                 joinedload(UserModel.occupations),
                 joinedload(UserModel.interests),
@@ -103,7 +103,7 @@ def replace_user_relations(db: DatabaseSession, user_dict: dict):
     user_dict['skills'] = get_multi_rows(db, SkillModel, values=user_dict['skills'], strict=True)
     user_dict['interests'] = get_multi_rows(db, InterestModel, values=user_dict['interests'], strict=True)
     user_dict['languages'] = get_multi_rows(db, LanguageModel, values=user_dict['languages'], strict=True)
-    user_dict['current_location'] = get_place(db, place_id=user_dict['current_location'])
+    user_dict['current_place'] = get_place(db, place_id=user_dict['current_place'])
     user_dict['place_of_origin'] = get_place(db, place_id=user_dict['place_of_origin'])
     user_dict['past_locations'] = get_places(db, place_ids=user_dict['past_locations'])
     user_dict['photos'] = get_photo_objects(db, photos_ids=user_dict['photos'])

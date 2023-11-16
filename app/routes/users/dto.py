@@ -19,7 +19,7 @@ class UserDTO(BaseDTO):
     email: EmailStr
     place_of_origin: PlaceDTO
     past_locations: List[PlaceDTO]
-    current_location: PlaceDTO
+    current_place: PlaceDTO
     description: str = Field(..., max_length=600)
     occupations: List[str]
     interests: List[str] = []
@@ -38,7 +38,7 @@ class UserPartialDTO(BaseDTO):
     email: Optional[EmailStr] = None
     place_of_origin: Optional[PlaceDTO] = None  # Assuming PlaceDTO is imported or defined elsewhere
     past_locations: Optional[List[PlaceDTO]] = []
-    current_location: Optional[PlaceDTO] = None
+    current_place: Optional[PlaceDTO] = None
     description: Optional[str] = Field(None, max_length=600)
     occupations: Optional[List[IDNamePairResponseDTO]] = []
     interests: Optional[List[IDNamePairResponseDTO]] = []
@@ -48,7 +48,7 @@ class UserPartialDTO(BaseDTO):
 
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)
-    current_location: Optional[str] = None
+    current_place: Optional[str] = None
     place_of_origin: Optional[str] = None
     past_locations: Optional[List[str]] = None
     occupations: Optional[List[UUID]] = None

@@ -28,11 +28,11 @@ class UserModel(TimeStampedModel):
     email = Column(String, nullable=False, unique=True)
     description = Column(Text)
 
-    place_of_origin_id = Column(UUID(as_uuid=True), ForeignKey('places.id'))
-    current_location_id = Column(UUID(as_uuid=True), ForeignKey('places.id'))
+    place_of_origin_id = Column(UUID(as_uuid=True), ForeignKey('places.id', name='fk__users__place_of_origin_id'))
+    current_place_id = Column(UUID(as_uuid=True), ForeignKey('places.id', name='fk__users__current_place_id'))
 
     place_of_origin = relationship("PlaceModel", foreign_keys=[place_of_origin_id], back_populates="users_originally_from_here")
-    current_location = relationship("PlaceModel", foreign_keys=[current_location_id], back_populates="users_currently_here")
+    current_place = relationship("PlaceModel", foreign_keys=[current_place_id], back_populates="users_currently_here")
     past_locations = relationship("PlaceModel", secondary=user_past_locations_table, back_populates="users_previously_here")
     occupations = relationship("OccupationModel", secondary=user_occupations_table, back_populates='users')
     interests = relationship("InterestModel", secondary=user_interests_table, back_populates='users')
@@ -50,15 +50,15 @@ class UserModel(TimeStampedModel):
         self.description = kwargs.get('description')
 
         place_of_origin = PlaceModel(**kwargs.get('place_of_origin')) if kwargs.get('place_of_origin') is not None else None
-        current_location = PlaceModel(**kwargs.get('current_location')) if kwargs.get('current_location') is not None else None
+        current_place = PlaceModel(**kwargs.get('current_place')) if kwargs.get('current_place') is not None else None
         past_locations = kwargs.get('past_locations', [])
         occupations = kwargs.get('occupations', [])
         interests = kwargs.get('interests', [])
 
         if place_of_origin:
             self.place_of_origin = place_of_origin
-        if current_location:
-            self.current_location = current_location
+        if current_place:
+            self.current_place = current_place
         if past_locations:
             self.past_locations = past_locations
         if occupations:
