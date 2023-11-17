@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Text
+from sqlalchemy import Column, String, ForeignKey, Text, PrimaryKeyConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import TimeStampedModel
@@ -20,16 +20,16 @@ user_photos_table = get_user_association_table(
 class UserModel(TimeStampedModel):
     __tablename__ = 'users'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     phone_country_code = Column(String)
     phone_number = Column(String)
-    email = Column(String, nullable=False, unique=True)
+    email = Column(String, nullable=False)
     description = Column(Text)
 
-    place_of_origin_id = Column(UUID(as_uuid=True), ForeignKey('places.id', name='fk__users__place_of_origin_id'))
-    current_place_id = Column(UUID(as_uuid=True), ForeignKey('places.id', name='fk__users__current_place_id'))
+    place_of_origin_id = Column(UUID(as_uuid=True), ForeignKey('places.id', name='fk__users__place_of_origin_id__places.id'))
+    current_place_id = Column(UUID(as_uuid=True), ForeignKey('places.id', name='fk__users__current_place_id__places.id'))
 
     place_of_origin = relationship("PlaceModel", foreign_keys=[place_of_origin_id], back_populates="users_originally_from_here")
     current_place = relationship("PlaceModel", foreign_keys=[current_place_id], back_populates="users_currently_here")
@@ -39,6 +39,12 @@ class UserModel(TimeStampedModel):
     skills = relationship("SkillModel", secondary=user_skills_table, back_populates='users')
     languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
     photos = relationship("FileModel", secondary=user_photos_table)
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name=f'pk__users__id'),
+        UniqueConstraint('id', name=f'uq__users__id'),
+        UniqueConstraint('email', name=f'uq__users__email'),
+    )
 
     def __init__(self, **kwargs):
         self.id = kwargs.get('id')

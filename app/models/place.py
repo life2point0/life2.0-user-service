@@ -10,7 +10,7 @@ user_past_locations_table = get_user_association_table('places', associate_key='
 class PlaceModel(TimeStampedModel):
     __tablename__ = 'places'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
     google_place_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     geolocation = Column(Geometry(geometry_type='POINT'), nullable=False)

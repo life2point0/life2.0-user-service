@@ -124,7 +124,6 @@ def update_current_user(
         is_new = user is None
         if is_new:
             keycloak_user = get_keycloak_user(user_id)
-            logging.info(keycloak_user['id'])
             if keycloak_user is None:
                 raise HTTPException(status_code=404, detail='User not found')
             user = UserModel(
