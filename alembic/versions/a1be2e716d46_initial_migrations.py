@@ -1,8 +1,8 @@
 """Initial Migrations
 
-Revision ID: 6e297b99c715
+Revision ID: a1be2e716d46
 Revises: bc616c6e5620
-Create Date: 2023-11-17 14:12:18.770520
+Create Date: 2023-11-17 14:45:18.098558
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 import geoalchemy2
 
 # revision identifiers, used by Alembic.
-revision: str = '6e297b99c715'
+revision: str = 'a1be2e716d46'
 down_revision: Union[str, None] = 'bc616c6e5620'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -72,8 +72,9 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('google_place_id', name='uq__places__google_place_id')
+    sa.PrimaryKeyConstraint('id', name='pk__places__id'),
+    sa.UniqueConstraint('google_place_id', name='uq__places__google_place_id'),
+    sa.UniqueConstraint('id', name='uq__places__id')
     )
     op.create_table('skills',
     sa.Column('id', sa.UUID(), nullable=False),

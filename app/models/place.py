@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, UniqueConstraint
+from sqlalchemy import Column, String, UniqueConstraint, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
@@ -27,5 +27,7 @@ class PlaceModel(TimeStampedModel):
         self.additional_details = kwargs.get('additional_details')
 
     __table_args__ = (
+        PrimaryKeyConstraint('id', name='pk__places__id'),
+        UniqueConstraint('id', name='uq__places__id'),
         UniqueConstraint('google_place_id', name='uq__places__google_place_id'),
     )
