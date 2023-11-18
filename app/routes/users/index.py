@@ -168,7 +168,7 @@ async def signup(
         error_message = error_dict.get('errorMessage', 'An unknown error occurred')
         raise HTTPException(e.response_code, detail=error_message)
     user_dict = get_keycloak_user(user_id)
-    return UserPartialDTO(user_dict)
+    return UserPartialDTO(**user_dict)
 
 @router.post('/me/communities')
 def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard)):
