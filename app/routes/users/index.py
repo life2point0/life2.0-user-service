@@ -86,17 +86,23 @@ def upsert_streamchat_user(user: UserModel):
         raise e
     
 def get_photo_objects(db: DatabaseSession, photos_ids: List[str]):
-    photos = db.query(FileModel).filter(FileModel.id.in_(photos_ids)).all()
-    new_photo_ids = set([str(photo_id) for photo_id in photos_ids]) - set([str(photo.id) for photo in photos])
-    for photo_id in new_photo_ids:
-        photos.append(FileModel(
-            id=photo_id,
-            bucket=FILE_UPLOAD_BUCKET,
-            file_extension='jpg',
-            folder='user-photos',
-            cdn_host=FILE_UPLOAD_CDN
-        ))
-    return photos
+    if photos_ids is None: 
+        return None
+    try:
+        photos = db.query(FileModel).filter(FileModel.id.in_(photos_ids)).all()
+        new_photo_ids = set([str(photo_id) for photo_id in photos_ids]) - set([str(photo.id) for photo in photos])
+        for photo_id in new_photo_ids:
+            photos.append(FileModel(
+                id=photo_id,
+                bucket=FILE_UPLOAD_BUCKET,
+                file_extension='jpg',
+                folder='user-photos',
+                cdn_host=FILE_UPLOAD_CDN
+            ))
+        return photos
+    except SQLAlchemyError as e:
+        handle_sqlalchemy_error(e)
+    
 
 def replace_user_relations(db: DatabaseSession, user_dict: dict):
     user_dict['occupations'] = get_multi_rows(db, OccupationModel, values=user_dict['occupations'], strict=True)

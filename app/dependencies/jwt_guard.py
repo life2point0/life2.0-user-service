@@ -4,15 +4,17 @@ from common.dto import TokenDTO
 from jose import jwt
 from app.constants import KEYCLOAK_REALM, KEYCLOAK_URL
 import requests
+import logging
 
 # TODO: Remove need for this. Use a locally stored key
 def get_key_from_jwks(kid):
     jwks_url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
     jwks = requests.get(jwks_url).json()
+    logging.info(jwks)
     for jwk in jwks['keys']:
         if jwk['kid'] == kid:
             return jwk
-    raise Exception("Key not found")
+    raise HTTPException(status_code=401, detail="Token signed with an unknown key")
 
 def jwt_guard(authorization: str = Header(...)) -> TokenDTO:
     prefix = "Bearer "
