@@ -3,13 +3,13 @@ from app.database import get_db, DatabaseSession
 from app.models import PlaceModel
 import googlemaps
 from sqlalchemy.orm import Session
-from app.constants import GOOGLE_MAPS_API_KEY
+from app.settings import AppSettings
 import logging
 from typing import List
 
 app = FastAPI()
 
-gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+gmaps = googlemaps.Client(key=AppSettings.GOOGLE_MAPS_API_KEY)
 
 def get_place(db: Session, place_id: str):
     if place_id is None:

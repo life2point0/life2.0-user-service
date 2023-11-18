@@ -1,10 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.constants import (
-    FILE_UPLOAD_BUCKET, 
-    S3_ENDPOINT, 
-    AWS_DEFAULT_REGION,
-    FILE_UPLOAD_URL_VALIDITY
-)
+from app.settings import AppSettings
 from .dto import PhotoDTO
 import logging
 import boto3
@@ -27,17 +22,17 @@ def get_signed_upload_url(
     try: 
         res: List(PhotoDTO) = []
         for i in range(params.count):
-            s3 = boto3.client('s3', endpoint_url=S3_ENDPOINT, region_name=AWS_DEFAULT_REGION)
+            s3 = boto3.client('s3', endpoint_url=AppSettings.S3_ENDPOINT, region_name=AppSettings.AWS_DEFAULT_REGION)
             photo_id = str(uuid4())
             object_key = f"user-photos/{photo_id}.jpg"
             url = s3.generate_presigned_url(
                 'put_object', 
                 Params={
-                    'Bucket': FILE_UPLOAD_BUCKET,
+                    'Bucket': AppSettings.FILE_UPLOAD_BUCKET,
                     'Key': object_key,
                     'ContentType': 'image/jpeg'
                 },
-                ExpiresIn=FILE_UPLOAD_URL_VALIDITY
+                ExpiresIn=AppSettings.FILE_UPLOAD_URL_VALIDITY
             )
             res.append(PhotoDTO(
                 id=photo_id,

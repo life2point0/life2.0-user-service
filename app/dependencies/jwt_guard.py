@@ -2,15 +2,13 @@ from fastapi import HTTPException, Header
 from pydantic import ValidationError
 from common.dto import TokenDTO
 from jose import jwt
-from app.constants import KEYCLOAK_REALM, KEYCLOAK_URL
+from app.settings import AppSettings
 import requests
-import logging
 
 # TODO: Remove need for this. Use a locally stored key
 def get_key_from_jwks(kid):
-    jwks_url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
+    jwks_url = f"{AppSettings.KEYCLOAK_URL}/realms/{AppSettings.KEYCLOAK_REALM}/protocol/openid-connect/certs"
     jwks = requests.get(jwks_url).json()
-    logging.info(jwks)
     for jwk in jwks['keys']:
         if jwk['kid'] == kid:
             return jwk

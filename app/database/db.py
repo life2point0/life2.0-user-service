@@ -1,11 +1,10 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.constants import DATABASE_URL
-import os
+from app.settings import AppSettings
 
 # Initialize the database engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(AppSettings.DATABASE_URL)
 
 # Create a custom base class for declarative models
 BaseModel = declarative_base()

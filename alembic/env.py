@@ -2,7 +2,7 @@ from logging.config import fileConfig
 from sqlalchemy import create_engine
 from alembic import context
 from app.models import BaseModel
-from app.constants import DATABASE_URL
+from app.settings import AppSettings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -42,7 +42,7 @@ def run_migrations_offline() -> None:
 
     """
     context.configure(
-        url=DATABASE_URL,
+        url=AppSettings.DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -60,7 +60,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_engine(DATABASE_URL)
+    connectable = create_engine(AppSettings.DATABASE_URL)
 
     with connectable.connect() as connection:
         context.configure(

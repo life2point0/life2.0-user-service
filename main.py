@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from app.routes.users import user_router
 from app.routes.communities import community_router
 from app.routes.health import health_router

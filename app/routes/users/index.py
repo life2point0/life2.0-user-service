@@ -1,16 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
-from app.constants import (
-    KEYCLOAK_URL, 
-    KEYCLOAK_REALM, 
-    KEYCLOAK_CLIENT_ID, 
-    KEYCLOAK_CLIENT_SECRET, 
-    STREAM_ACCESS_KEY_ID, 
-    STREAM_SECRET_ACCESS_KEY,
-    FILE_UPLOAD_BUCKET,
-    FILE_UPLOAD_CDN
-)
+from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError
@@ -31,16 +22,16 @@ logging.basicConfig(level=logging.DEBUG)
 router = APIRouter()
 
 keycloak_admin = KeycloakAdmin(
-    server_url=KEYCLOAK_URL,
-    realm_name=KEYCLOAK_REALM,
-    client_id=KEYCLOAK_CLIENT_ID,
-    client_secret_key=KEYCLOAK_CLIENT_SECRET,
+    server_url=AppSettings.KEYCLOAK_URL,
+    realm_name=AppSettings.KEYCLOAK_REALM,
+    client_id=AppSettings.KEYCLOAK_CLIENT_ID,
+    client_secret_key=AppSettings.KEYCLOAK_CLIENT_SECRET,
     verify=True,
 )
 
 keycloak_admin.token
 
-streamChat = StreamChat(api_key=STREAM_ACCESS_KEY_ID, api_secret=STREAM_SECRET_ACCESS_KEY)
+streamChat = StreamChat(api_key=AppSettings.STREAM_ACCESS_KEY_ID, api_secret=AppSettings.STREAM_SECRET_ACCESS_KEY)
 
 def get_keycloak_user(user_id: str):
     try:
@@ -95,10 +86,10 @@ def get_photo_objects(db: DatabaseSession, photos_ids: List[str]):
         for photo_id in new_photo_ids:
             photos.append(FileModel(
                 id=UUID(photo_id),
-                bucket=FILE_UPLOAD_BUCKET,
+                bucket=AppSettings.FILE_UPLOAD_BUCKET,
                 file_extension='jpg',
                 folder='user-photos',
-                cdn_host=FILE_UPLOAD_CDN
+                cdn_host=AppSettings.FILE_UPLOAD_CDN
             ))
         return photos
     except SQLAlchemyError as e:
@@ -209,3 +200,4 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
     }
 
 router.include_router(user_photo_routes, prefix="/me/photos")
+
