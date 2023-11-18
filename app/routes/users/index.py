@@ -25,6 +25,7 @@ from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel
 from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms
 from typing import List
 from uuid import UUID
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -197,11 +198,11 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
 
 @router.get('/me/tokens')
 def join_community(token_data: TokenDTO = Depends(jwt_guard)):
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     token = streamChat.create_token(
         token_data.sub, 
         iat = now,
-        exp = now + datetime.timedelta(hours=1)
+        exp = now + timedelta(hours=1)
     )
     return {
         "streamChat": token
