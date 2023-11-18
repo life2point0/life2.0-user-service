@@ -18,12 +18,11 @@ from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO
 import logging
 import json
 from stream_chat import StreamChat
-import datetime
 from app.dependencies import jwt_guard
 from common.dto import TokenDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
-from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error
+from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms
 from typing import List
 from uuid import UUID
 
@@ -138,6 +137,7 @@ def update_current_user(
                 email = keycloak_user['email'],
                 first_name = keycloak_user['firstName'],
                 last_name = keycloak_user['lastName'],
+                created_at = datetime_from_epoch_ms(keycloak_user['createdTimestamp'])
             )
             db.add(user)
         user_dict = user_data.model_dump()
@@ -175,7 +175,8 @@ async def signup(
         error_dict = json.loads(e.error_message.decode('utf-8'))
         error_message = error_dict.get('errorMessage', 'An unknown error occurred')
         raise HTTPException(e.response_code, detail=error_message)
-    return UserPartialDTO(**get_keycloak_user(user_id))
+    user_dict = get_keycloak_user(user_id)
+    return UserPartialDTO(user_dict)
 
 @router.post('/me/communities')
 def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard)):

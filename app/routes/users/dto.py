@@ -3,8 +3,9 @@ from pydantic import Field
 from typing import List, Optional
 from common.util import to_camel
 from pydantic import EmailStr
-from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO
+from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO, PastEpochTimestamp
 from uuid import UUID
+from datetime import datetime
 
 app = FastAPI()
 
@@ -29,6 +30,7 @@ class PhotoDTO(BaseDTO):
     id: UUID
     url: Optional[str] = Field('')
 
+# TODO: Cleanup UserPartialDTO and separate out Request DTO and Response DTO.
 class UserPartialDTO(BaseDTO):
     id: UUID = Field(None)
     first_name: Optional[str] = Field(None, example="John", pattern=NAME_REGEX)
@@ -45,9 +47,11 @@ class UserPartialDTO(BaseDTO):
     skills: Optional[List[IDNamePairResponseDTO]] = []
     languages: Optional[List[IDNamePairResponseDTO]] = []
     photos: Optional[List[PhotoDTO]] = []
+    joined_at: Optional[int] = None
 
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)
+    joined_at: None = Field(None)
     current_place: Optional[str] = None
     place_of_origin: Optional[str] = None
     past_locations: Optional[List[str]] = None

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, ForeignKey, Text, PrimaryKeyConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from .base import TimeStampedModel
 from uuid import uuid4
@@ -9,6 +10,7 @@ from .skill import user_skills_table
 from .interest import user_interests_table
 from .language import user_languages_table
 from .association_tables import get_user_association_table
+from datetime import datetime
 
 user_photos_table = get_user_association_table(
     'files', 
@@ -40,6 +42,10 @@ class UserModel(TimeStampedModel):
     languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
     photos = relationship("FileModel", secondary=user_photos_table)
 
+    @hybrid_property
+    def joined_at(self):
+        return self.created_at
+    
     __table_args__ = (
         PrimaryKeyConstraint('id', name=f'pk__users__id'),
         UniqueConstraint('id', name=f'uq__users__id'),
@@ -54,6 +60,7 @@ class UserModel(TimeStampedModel):
         self.phone_number = kwargs.get('phone_number')
         self.email = kwargs.get('email')
         self.description = kwargs.get('description')
+        self.created_at = kwargs.get('created_at')
 
         place_of_origin = PlaceModel(**kwargs.get('place_of_origin')) if kwargs.get('place_of_origin') is not None else None
         current_place = PlaceModel(**kwargs.get('current_place')) if kwargs.get('current_place') is not None else None
