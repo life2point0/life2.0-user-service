@@ -4,8 +4,9 @@ from common.dto import TokenDTO
 from jose import jwt
 from app.settings import AppSettings
 import requests
+from functools import lru_cache
 
-# TODO: Remove need for this. Use a locally stored key
+@lru_cache(maxsize=16)
 def get_key_from_jwks(kid):
     jwks_url = f"{AppSettings.KEYCLOAK_URL}/realms/{AppSettings.KEYCLOAK_REALM}/protocol/openid-connect/certs"
     jwks = requests.get(jwks_url).json()

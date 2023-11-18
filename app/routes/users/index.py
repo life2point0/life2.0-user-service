@@ -29,8 +29,6 @@ keycloak_admin = KeycloakAdmin(
     verify=True,
 )
 
-keycloak_admin.token
-
 streamChat = StreamChat(api_key=AppSettings.STREAM_ACCESS_KEY_ID, api_secret=AppSettings.STREAM_SECRET_ACCESS_KEY)
 
 def get_keycloak_user(user_id: str):
