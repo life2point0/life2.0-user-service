@@ -67,6 +67,23 @@ class UserSignupDTO(BaseDTO):
     email: EmailStr = None
     password: str
 
+class UserLoginRequestDTO(BaseDTO):
+    username: str
+    password: str
+
+class UserLoginResponseDTO(BaseDTO):
+    access_token: str
+    expires_in: int
+    refresh_token: str
+    refresh_expires_in: int
+    token_type: str
+
+class RefreshTokenRequestDTO(BaseDTO):
+    refresh_token: str
+
+class UserLogoutRequestDTO(BaseDTO):
+    refresh_token: str
+
 class JoinCommunityDTO(BaseDTO):
     community_id: str = Field(...)
 

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes.users import user_router
+from app.routes.users import user_router, sessions_router
 from app.routes.communities import community_router
 from app.routes.health import health_router
 from app.routes.occupations import occupations_router
@@ -37,6 +37,7 @@ def app_openapi():
 app.openapi = app_openapi
 
 app.include_router(user_router, prefix="/users", tags=["users"])
+app.include_router(sessions_router, prefix="/sessions", tags=["sessions"])
 app.include_router(community_router, prefix="/communities", tags=["communities"])
 app.include_router(health_router, prefix="/health", tags=["health"])
 

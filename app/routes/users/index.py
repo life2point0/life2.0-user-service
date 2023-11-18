@@ -4,8 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel
-from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError
-from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO
+from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError, KeycloakOpenID
+from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, RefreshTokenRequestDTO, UserLoginRequestDTO, UserLoginResponseDTO, RefreshTokenRequestDTO
 import logging
 import json
 from stream_chat import StreamChat
@@ -13,21 +13,13 @@ from app.dependencies import jwt_guard
 from common.dto import TokenDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
-from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms
+from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms, keycloak_openid, keycloak_admin
 from typing import List
 from uuid import UUID
 from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
-
-keycloak_admin = KeycloakAdmin(
-    server_url=AppSettings.KEYCLOAK_URL,
-    realm_name=AppSettings.KEYCLOAK_REALM,
-    client_id=AppSettings.KEYCLOAK_CLIENT_ID,
-    client_secret_key=AppSettings.KEYCLOAK_CLIENT_SECRET,
-    verify=True,
-)
 
 streamChat = StreamChat(api_key=AppSettings.STREAM_ACCESS_KEY_ID, api_secret=AppSettings.STREAM_SECRET_ACCESS_KEY)
 
@@ -197,5 +189,5 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
         "streamChat": token
     }
 
-router.include_router(user_photo_routes, prefix="/me/photos")
 
+router.include_router(user_photo_routes, prefix="/me/photos")
