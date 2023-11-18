@@ -25,6 +25,7 @@ from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
 from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error
 from typing import List
+from uuid import UUID
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -93,7 +94,7 @@ def get_photo_objects(db: DatabaseSession, photos_ids: List[str]):
         new_photo_ids = set([str(photo_id) for photo_id in photos_ids]) - set([str(photo.id) for photo in photos])
         for photo_id in new_photo_ids:
             photos.append(FileModel(
-                id=photo_id,
+                id=UUID(photo_id),
                 bucket=FILE_UPLOAD_BUCKET,
                 file_extension='jpg',
                 folder='user-photos',
