@@ -60,8 +60,11 @@ def upsert_streamchat_user(user: UserModel):
         user_data = {
             "id": str(user.id),
             "name": f"{user.first_name} {user.last_name}",
-            "role": "user"
+            "role": "user",
         }
+        photo = user.photos[0]
+        if photo is not None:   
+            user_data['image'] = user.photos[0].url
         streamChat.update_user(user_data)
     except HTTPException as e:
         logging.error(e)
@@ -127,7 +130,12 @@ def update_current_user(
         for key, value in user_dict.items():
             if value is not None and hasattr(user, key) and not isinstance(value, dict):
                 setattr(user, key, value)
-        if is_new or user_dict['first_name'] is not None or user_dict['last_name']:
+        if (
+            is_new 
+            or user_dict['first_name'] is not None 
+            or user_dict['last_name'] is not None 
+            or user_dict['photos'] is not None
+        ):
             upsert_streamchat_user(user)
         db.commit()
         db.refresh(user)
