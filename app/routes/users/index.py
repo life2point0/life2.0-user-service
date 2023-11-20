@@ -95,7 +95,7 @@ def upsert_streamchat_user(user: UserModel):
             "name": f"{user.first_name} {user.last_name}",
             "role": "user",
         }
-        if user.photos is not None:
+        if user.photos is not None and len(user.photos) > 0:
             photo = user.photos[0]
             if photo is not None:   
                 user_data['image'] = user.photos[0].url
