@@ -14,9 +14,10 @@ from common.dto import TokenDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
 from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms, keycloak_openid, keycloak_admin
-from typing import List
+from typing import List, Callable
 from uuid import UUID
 from datetime import datetime, timedelta
+from requests import HTTPError
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -31,6 +32,38 @@ def get_keycloak_user(user_id: str):
     except KeycloakGetError as e:
         logging.error(f"An error occurred: {e}")
         raise HTTPException(status_code=e.response_code, detail=e.response_body.decode('utf-8'))
+
+
+def update_keycloak_user(user: UserModel) -> Callable:
+    # Save the original user data for rollback purposes
+    original_user_data = {
+        "email": user.email,
+        "firstName": user.first_name,
+        "lastName": user.last_name
+    }
+
+    try:
+        keycloak_user_data = {
+            "email": user.email,
+            "firstName": user.first_name,
+            "lastName": user.last_name
+        }
+
+        # Update the user in Keycloak
+        keycloak_admin.update_user(user_id=user.id, payload=keycloak_user_data)
+        
+        # No exception means update was successful
+        # Return a rollback function that can be called if needed
+        def rollback():
+            keycloak_admin.update_user(user_id=user.id, payload=original_user_data)
+            print("Rollback successful.")
+            
+        return rollback
+
+    except KeycloakError as e:
+        logging.error(f"Error updating user in Keycloak: {e}")
+        raise e
+
 
 def get_user_by_user_id(db: DatabaseSession, user_id: str):
     user = (
@@ -66,7 +99,7 @@ def upsert_streamchat_user(user: UserModel):
         if photo is not None:   
             user_data['image'] = user.photos[0].url
         streamChat.update_user(user_data)
-    except HTTPException as e:
+    except HTTPError as e:
         logging.error(e)
         raise e
     
@@ -125,23 +158,37 @@ def update_current_user(
                 created_at = datetime_from_epoch_ms(keycloak_user['createdTimestamp'])
             )
             db.add(user)
+
         user_dict = user_data.model_dump()
+
+        is_email_changed = user_dict['email'] is not None
+        is_name_changed = user_dict['first_name'] is not None or user_dict['last_name'] is not None
+        is_photos_changed = user_dict['photos'] is not None
+
         replace_user_relations(db, user_dict)
         for key, value in user_dict.items():
             if value is not None and hasattr(user, key) and not isinstance(value, dict):
                 setattr(user, key, value)
-        if (
-            is_new 
-            or user_dict['first_name'] is not None 
-            or user_dict['last_name'] is not None 
-            or user_dict['photos'] is not None
-        ):
-            upsert_streamchat_user(user)
+
+        if is_new or is_name_changed or is_photos_changed:
+            try: 
+                rollback_keycloak_user = update_keycloak_user(user)
+            except KeycloakError as e:
+                raise HTTPException(e.response_code, str(e))
+        if is_name_changed or is_email_changed:
+            try:
+                upsert_streamchat_user(user)
+            except HTTPError as e:
+                if rollback_keycloak_user is not None:
+                    rollback_keycloak_user(user)
+                raise HTTPException(e.response.status_code, str(e))
+        
         db.commit()
         db.refresh(user)
         return user
     except SQLAlchemyError as e:
         handle_sqlalchemy_error(e)
+
 
 @router.post("/signup")
 async def signup(
