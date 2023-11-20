@@ -95,9 +95,10 @@ def upsert_streamchat_user(user: UserModel):
             "name": f"{user.first_name} {user.last_name}",
             "role": "user",
         }
-        photo = user.photos[0]
-        if photo is not None:   
-            user_data['image'] = user.photos[0].url
+        if user.photos is not None:
+            photo = user.photos[0]
+            if photo is not None:   
+                user_data['image'] = user.photos[0].url
         streamChat.update_user(user_data)
     except HTTPError as e:
         logging.error(e)
