@@ -170,12 +170,12 @@ def update_current_user(
             if value is not None and hasattr(user, key) and not isinstance(value, dict):
                 setattr(user, key, value)
 
-        if is_new or is_name_changed or is_photos_changed:
+        if is_name_changed or is_email_changed:
             try: 
                 rollback_keycloak_user = update_keycloak_user(user)
             except KeycloakError as e:
                 raise HTTPException(e.response_code, str(e))
-        if is_name_changed or is_email_changed:
+        if is_new or is_name_changed or is_photos_changed:
             try:
                 upsert_streamchat_user(user)
             except HTTPError as e:
