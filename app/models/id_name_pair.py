@@ -10,7 +10,7 @@ def create_id_name_pair_model(table_name: str):
         __abstract__ = True
         id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
         name = Column(CITEXT(), nullable=False)  
-        created_by_user_id = Column(UUID)
+        created_by_user_id = Column(UUID, nullable=False)
 
         @declared_attr
         def created_by(cls):

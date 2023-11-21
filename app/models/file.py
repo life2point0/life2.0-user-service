@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, UniqueConstraint, PrimaryKeyConstraint
+from sqlalchemy import Column, String, ForeignKeyConstraint, PrimaryKeyConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.ext.hybrid import hybrid_property
 from geoalchemy2 import Geometry
@@ -14,9 +14,12 @@ class FileModel(TimeStampedModel):
     file_name = Column(String, default='', nullable=True)
     bucket = Column(String, nullable=False)
     cdn_host = Column(String, nullable=False)
+    created_by_user_id = Column(UUID, nullable=False)
 
     __table_args__ = (
         PrimaryKeyConstraint('id', name='pk__files__id'),
+        UniqueConstraint('id', name='uq__files__id'),
+        ForeignKeyConstraint(['created_by_user_id'], ['users.id'], name=f'fk__files.created_by__users.id')
     )
 
     @hybrid_property
