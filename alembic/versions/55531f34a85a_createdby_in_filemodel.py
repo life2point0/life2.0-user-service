@@ -1,8 +1,8 @@
-"""Created_by for id,name and file models
+"""CreatedBy in FileModel
 
-Revision ID: 0a36d16b65ef
+Revision ID: 55531f34a85a
 Revises: 3beb8c590a36
-Create Date: 2023-11-21 18:05:01.549849
+Create Date: 2023-11-22 00:53:52.178048
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0a36d16b65ef'
+revision: str = '55531f34a85a'
 down_revision: Union[str, None] = '3beb8c590a36'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

@@ -22,6 +22,5 @@ def get_community_association_table(associated_table: str, associate_key: str = 
         TimeStampedModel.metadata,
         Column('community_id', UUID, ForeignKey('communities.id', name=f'fk__{association_table}.community_id__communities.id'), primary_key=True),
         Column(associate_key, UUID, ForeignKey(f'{associated_table}.id', name=f'fk__{association_table}.{associate_key}__{associated_table}.id'), primary_key=True),
-        Column('user_preferred_sort_order', Integer, nullable=True, default=None),
         PrimaryKeyConstraint('community_id', associate_key, name=f'pk__{association_table}__community_id__{associate_key}')
     )

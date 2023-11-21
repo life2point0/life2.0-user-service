@@ -20,6 +20,6 @@ def create_id_name_pair_model(table_name: str):
             PrimaryKeyConstraint('id', name=f'pk__{table_name}__id'),
             UniqueConstraint('id', name=f'uq__{table_name}__id'),
             UniqueConstraint('name', name=f'uq__{table_name}__name'),
-            ForeignKeyConstraint(['created_by_user_id'], ['users.id'], name=f'fk__{table_name}.created_by__users.id')
+            ForeignKeyConstraint(['created_by_user_id'], ['users.id'], name=f'fk__{table_name}.created_by__users.id'),
         )
     return IDNamePairModel
