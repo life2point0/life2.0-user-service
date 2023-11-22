@@ -8,47 +8,27 @@ from .dto import CommunityCreateRequestDTO, CommunityDTO
 from app.database import get_db
 from common.dto import TokenDTO
 import logging
-from common.util.stream_chat import upsert_stream_chat_channel
-from uuid import uuid4
 
-create_community_route = APIRouter()
+update_community_route = APIRouter()
 
-@create_community_route.post("", response_model=CommunityDTO, status_code=status.HTTP_201_CREATED)
+@update_community_route.post("", response_model=CommunityDTO, status_code=status.HTTP_201_CREATED)
 def create_community(community_data: CommunityCreateRequestDTO, 
                      current_user: TokenDTO = Depends(jwt_guard), 
                      db: Session = Depends(get_db)):
-    if ('community_admin' not in current_user.realm_access.roles):
-        raise HTTPException(status_code=403, detail='You don\'t have access to create communities')
     try:
-        member_ids = [current_user.sub, *(community_data.members or [])]
         new_community = CommunityModel(
-            id=uuid4(),
             name=community_data.name,
             description=community_data.description,
             image_id=community_data.image,
             created_by_user_id=current_user.sub,
-            members=get_multi_rows(db, UserModel, values=member_ids, strict=True) or [],
+            members=get_multi_rows(db, UserModel, values=community_data.members, strict=True) or [],
             tagged_places=get_places(db, community_data.tagged_places) or [],
             tagged_occupations=get_multi_rows(db, OccupationModel, values=community_data.tagged_occupations, strict=True) or [],
             tagged_skills=get_multi_rows(db, SkillModel, values=community_data.tagged_skills, strict=True) or [],
             tagged_interests=get_multi_rows(db, InterestModel, values=community_data.tagged_interests, strict=True) or [],
-            tagged_languages=get_multi_rows(db, LanguageModel, values=community_data.tagged_languages, strict=True) or [],
+            tagged_languages=get_multi_rows(db, LanguageModel, values=community_data.tagged_languages, strict=True) or []
         )
         db.add(new_community)
-        try: 
-            upsert_stream_chat_channel(
-                channel_id=new_community.id,
-                user_id=current_user.sub,
-                channel_data={
-                    "name": new_community.name,
-                    "description": new_community.description,
-                    "image": new_community.image,
-                    "members": member_ids
-                }
-            )
-        except Exception as e:
-            db.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
         db.commit()
         db.refresh(new_community)
         return CommunityDTO.model_validate(new_community)

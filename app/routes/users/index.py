@@ -22,7 +22,7 @@ from requests import HTTPError
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
 
-streamChat = StreamChat(api_key=AppSettings.STREAM_ACCESS_KEY_ID, api_secret=AppSettings.STREAM_SECRET_ACCESS_KEY)
+stream_chat = StreamChat(api_key=AppSettings.STREAM_ACCESS_KEY_ID, api_secret=AppSettings.STREAM_SECRET_ACCESS_KEY)
 
 def get_keycloak_user(user_id: str):
     try:
@@ -99,7 +99,7 @@ def upsert_streamchat_user(user: UserModel):
             photo = user.photos[0]
             if photo is not None:   
                 user_data['image'] = user.photos[0].url
-        streamChat.update_user(user_data)
+        stream_chat.update_user(user_data)
     except HTTPError as e:
         logging.error(e)
         raise e
@@ -218,7 +218,7 @@ async def signup(
 
 @router.post('/me/communities')
 def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard)):
-    channel = streamChat.channel("community", payload.community_id)
+    channel = stream_chat.channel("community", payload.community_id)
     channel.add_members([token_data.sub])
 
 
@@ -229,20 +229,20 @@ def join_community(token_data: TokenDTO = Depends(jwt_guard)):
         "members": {"$in": [token_data.sub]}
     }
     sort = {"created_at": -1}
-    response = streamChat.query_channels(filter_conditions, sort=sort)
+    response = stream_chat.query_channels(filter_conditions, sort=sort)
     return response
 
 
 @router.get('/me/tokens')
 def join_community(token_data: TokenDTO = Depends(jwt_guard)):
     now = datetime.utcnow()
-    token = streamChat.create_token(
+    token = stream_chat.create_token(
         token_data.sub, 
         iat = now,
         exp = now + timedelta(hours=1)
     )
     return {
-        "streamChat": token
+        "stream_chat": token
     }
 
 
