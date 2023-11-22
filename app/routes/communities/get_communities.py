@@ -5,9 +5,9 @@ from stream_chat import StreamChat
 
 
 logging.basicConfig(level=logging.DEBUG) 
-router = APIRouter()
+get_communities_route = APIRouter()
 
-@router.get("")
+@get_communities_route.get("")
 def community_list():
     try:
         client = StreamChat(api_key=AppSettings.STREAM_ACCESS_KEY_ID, api_secret=AppSettings.STREAM_SECRET_ACCESS_KEY)

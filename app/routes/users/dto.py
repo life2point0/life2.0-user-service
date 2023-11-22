@@ -3,7 +3,7 @@ from pydantic import Field
 from typing import List, Optional
 from common.util import to_camel
 from pydantic import EmailStr
-from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO, PastEpochTimestamp
+from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO, FileDTO
 from uuid import UUID
 from datetime import datetime
 
@@ -26,10 +26,6 @@ class UserDTO(BaseDTO):
     interests: List[str] = []
 
 
-class PhotoDTO(BaseDTO):
-    id: UUID
-    url: Optional[str] = Field('')
-
 # TODO: Cleanup UserPartialDTO and separate out Request DTO and Response DTO.
 class UserPartialDTO(BaseDTO):
     id: UUID = Field(None)
@@ -46,7 +42,7 @@ class UserPartialDTO(BaseDTO):
     interests: Optional[List[IDNamePairResponseDTO]] = []
     skills: Optional[List[IDNamePairResponseDTO]] = []
     languages: Optional[List[IDNamePairResponseDTO]] = []
-    photos: Optional[List[PhotoDTO]] = []
+    photos: Optional[List[FileDTO]] = []
     joined_at: Optional[int] = None
 
 class UserUpdateDTO(UserPartialDTO):

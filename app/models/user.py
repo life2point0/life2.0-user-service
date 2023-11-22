@@ -10,7 +10,7 @@ from .skill import user_skills_table
 from .interest import user_interests_table
 from .language import user_languages_table
 from .association_tables import get_user_association_table
-from datetime import datetime
+from .community import community_members_table
 
 user_photos_table = get_user_association_table(
     'files', 
@@ -41,10 +41,16 @@ class UserModel(TimeStampedModel):
     skills = relationship("SkillModel", secondary=user_skills_table, back_populates='users')
     languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
     photos = relationship("FileModel", secondary=user_photos_table)
+    communities = relationship("CommunityModel", secondary=community_members_table, back_populates="members")
 
     @hybrid_property
     def joined_at(self):
         return self.created_at
+    
+
+    @hybrid_property
+    def profile_photo(self):
+        return self.photos[0] if len(self.photos) > 0 else None
     
     __table_args__ = (
         PrimaryKeyConstraint('id', name=f'pk__users__id'),

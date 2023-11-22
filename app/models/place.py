@@ -4,9 +4,11 @@ from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 from .base import TimeStampedModel
 from uuid import uuid4
-from .association_tables import get_user_association_table
+from .association_tables import get_user_association_table, get_community_association_table
 
 user_past_locations_table = get_user_association_table('places', associate_key='place_id', association_table_name='user_past_locations')
+community_tagged_places_table = get_community_association_table('places', 'place_id', association_table_name='community_tagged_places')
+
 class PlaceModel(TimeStampedModel):
     __tablename__ = 'places'
 
@@ -18,6 +20,7 @@ class PlaceModel(TimeStampedModel):
     users_originally_from_here = relationship("UserModel", foreign_keys="UserModel.place_of_origin_id")
     users_currently_here = relationship("UserModel", foreign_keys="UserModel.current_place_id")
     users_previously_here = relationship("UserModel", secondary=user_past_locations_table, back_populates='past_locations')
+    tagged_communities = relationship("CommunityModel", secondary=community_tagged_places_table, back_populates='tagged_places')
 
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')

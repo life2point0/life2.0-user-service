@@ -6,3 +6,4 @@ from .base import BaseDTO
 from .paginated_response import PaginatedResponseDTO
 from .pagination_params import PaginationParams
 from .epoch_timestamp import PastEpochTimestamp
+from .file import FileDTO
