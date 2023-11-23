@@ -15,6 +15,6 @@ create_language_route = APIRouter()
 async def get_languages(
     data: IDNamePairRequestDTO, 
     db: DatabaseSession = Depends(get_db),
-    _: TokenDTO = Depends(jwt_guard)
+    token_data: TokenDTO = Depends(jwt_guard)
 ):
-    return create_id_name_pair_row(db, model=LanguageModel, name=data.name)
+    return create_id_name_pair_row(db, LanguageModel, created_by=token_data.sub, name=data.name)

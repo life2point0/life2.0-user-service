@@ -24,7 +24,7 @@ def patch_community(community_id: str,
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         patch_data = community_data.model_dump()
         if community_data.photo is not None:
-            patch_data['photo'] = get_or_create_file_objects(db, files_ids=[community_data.photo], folder='community-photos', file_extension='jpg', user_id=current_user.sub)[0]
+            patch_data['photo'] = get_or_create_file_objects(db, file_ids=[community_data.photo], folder='community-photos', file_extension='jpg', user_id=current_user.sub)[0]
         patch_data['tagged_places'] = get_places(db, patch_data['tagged_places'])
         patch_data['tagged_interests'] = get_multi_rows(db, InterestModel, community_data.tagged_interests, strict=True, sort_by_values=True)
         patch_data['tagged_skills'] = get_multi_rows(db, SkillModel, community_data.tagged_skills, strict=True, sort_by_values=True)

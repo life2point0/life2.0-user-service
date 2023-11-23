@@ -105,7 +105,7 @@ def upsert_streamchat_user(user: UserModel):
         raise e
 
 
-def replace_user_relations(db: DatabaseSession, user_dict: dict):
+def replace_user_relations(db: DatabaseSession, user_id: UUID, user_dict: dict):
     user_dict['occupations'] = get_multi_rows(db, OccupationModel, values=user_dict['occupations'], strict=True)
     user_dict['skills'] = get_multi_rows(db, SkillModel, values=user_dict['skills'], strict=True)
     user_dict['interests'] = get_multi_rows(db, InterestModel, values=user_dict['interests'], strict=True)
@@ -113,7 +113,7 @@ def replace_user_relations(db: DatabaseSession, user_dict: dict):
     user_dict['current_place'] = get_place(db, place_id=user_dict['current_place'])
     user_dict['place_of_origin'] = get_place(db, place_id=user_dict['place_of_origin'])
     user_dict['past_places'] = get_places(db, place_ids=user_dict['past_places'])
-    user_dict['photos'] = get_or_create_file_objects(db, photos_ids=user_dict['photos'])
+    user_dict['photos'] = get_or_create_file_objects(db, user_id=user_id, file_ids=user_dict['photos'])
 
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
@@ -148,7 +148,7 @@ def update_current_user(
         is_name_changed = user_dict['first_name'] is not None or user_dict['last_name'] is not None
         is_photos_changed = user_dict['photos'] is not None
 
-        replace_user_relations(db, user_dict)
+        replace_user_relations(db, token_data.sub, user_dict)
         for key, value in user_dict.items():
             if value is not None and hasattr(user, key) and not isinstance(value, dict):
                 setattr(user, key, value)

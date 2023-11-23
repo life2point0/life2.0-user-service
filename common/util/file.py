@@ -6,12 +6,12 @@ from common.util import handle_sqlalchemy_error
 from typing import List
 from uuid import UUID
 
-def get_or_create_file_objects(db: DatabaseSession, files_ids: List[str], user_id: UUID, folder='user-photos', file_extension='jpg'):
-    if files_ids is None: 
+def get_or_create_file_objects(db: DatabaseSession, file_ids: List[str], user_id: UUID, folder='user-photos', file_extension='jpg'):
+    if file_ids is None: 
         return None
     try:
-        files = db.query(FileModel).filter(FileModel.id.in_(files_ids)).all()
-        new_file_ids = set([str(file_id) for file_id in files_ids]) - set([str(file.id) for file in files])
+        files = db.query(FileModel).filter(FileModel.id.in_(file_ids)).all()
+        new_file_ids = set([str(file_id) for file_id in file_ids]) - set([str(file.id) for file in files])
         for file_id in new_file_ids:
             files.append(FileModel(
                 id=UUID(file_id),

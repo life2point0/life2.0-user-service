@@ -2,7 +2,6 @@ from common.dto import IDNamePairRequestDTO, IDNamePairResponseDTO, PlaceDTO, Ba
 from uuid import UUID
 from typing import Optional, List
 from common.dto import FileDTO
-
 class CommunityMemberDTO(BaseDTO):
     id: UUID
     first_name: str
@@ -10,7 +9,7 @@ class CommunityMemberDTO(BaseDTO):
     profile_photo: FileDTO
 
 class CommunityDTO(IDNamePairResponseDTO):
-    description: str
+    description: Optional[str]
     photo: Optional[FileDTO] = None
     tagged_places: Optional[List[PlaceDTO]] = None
     tagged_interests: Optional[List[IDNamePairResponseDTO]] = None
@@ -18,8 +17,8 @@ class CommunityDTO(IDNamePairResponseDTO):
     tagged_languages: Optional[List[IDNamePairResponseDTO]] = None
     tagged_occupations: Optional[List[IDNamePairResponseDTO]] = None
     members: Optional[List[CommunityMemberDTO]] = None
-    created_at: int
-    created_by: CommunityMemberDTO
+    created_at: Optional[int]
+    created_by: Optional[CommunityMemberDTO]
 
 
 
@@ -36,3 +35,4 @@ class CommunityCreateRequestDTO(IDNamePairRequestDTO):
 class CommunityPatchRequestDTO(CommunityCreateRequestDTO):
     members: Optional[None] = None
     description: Optional[str] = None
+

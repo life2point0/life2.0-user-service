@@ -34,7 +34,7 @@ def create_community(community_data: CommunityCreateRequestDTO,
             tagged_languages=get_multi_rows(db, LanguageModel, values=community_data.tagged_languages, strict=True) or [],
         )
         if community_data.photo is not None:
-            setattr(new_community, 'photo', get_or_create_file_objects(db, files_ids=[community_data.photo], folder='community-photos', file_extension='jpg', user_id=current_user.sub)[0])
+            setattr(new_community, 'photo', get_or_create_file_objects(db, file_ids=[community_data.photo], folder='community-photos', file_extension='jpg', user_id=current_user.sub)[0])
         db.add(new_community)
         try: 
             rollback_stream_chat_channel = create_stream_chat_channel(

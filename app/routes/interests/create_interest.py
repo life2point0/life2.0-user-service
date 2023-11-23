@@ -15,6 +15,6 @@ create_interest_route = APIRouter()
 async def get_interests(
     data: IDNamePairRequestDTO, 
     db: DatabaseSession = Depends(get_db),
-    _: TokenDTO = Depends(jwt_guard)
+    token_data: TokenDTO = Depends(jwt_guard)
 ):
-    return create_id_name_pair_row(db, model=InterestModel, name=data.name)
+    return create_id_name_pair_row(db, InterestModel, name=data.name, created_by=token_data.sub)

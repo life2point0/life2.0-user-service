@@ -7,6 +7,7 @@ from common.util import handle_sqlalchemy_error
 import logging
 from typing import Type
 from app.database import BaseModel
+from uuid import UUID
 
 logging.basicConfig(level=logging.DEBUG) 
 
@@ -14,14 +15,15 @@ create_interest_route = APIRouter()
 
 def create_id_name_pair_row(
         db: DatabaseSession,
-        model: Type[BaseModel],
+        Model: Type[BaseModel],
         name: str,
+        created_by: UUID
     ):
     try:
         normalized_name = ' '.join(name.split()).title()
-        row = db.query(model).filter(model.name == normalized_name).first()
+        row = db.query(Model).filter(Model.name == normalized_name).first()
         if row is None:
-            row = model(name=normalized_name)
+            row = Model(name=normalized_name, created_by_user_id=created_by)
             db.add(row)
             db.commit()
             db.refresh(row)
