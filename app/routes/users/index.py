@@ -71,7 +71,7 @@ def get_user_by_user_id(db: DatabaseSession, user_id: str):
             .options(
                 joinedload(UserModel.place_of_origin),
                 joinedload(UserModel.current_place),
-                joinedload(UserModel.past_locations),
+                joinedload(UserModel.past_places),
                 joinedload(UserModel.occupations),
                 joinedload(UserModel.interests),
                 joinedload(UserModel.skills),
@@ -112,7 +112,7 @@ def replace_user_relations(db: DatabaseSession, user_dict: dict):
     user_dict['languages'] = get_multi_rows(db, LanguageModel, values=user_dict['languages'], strict=True)
     user_dict['current_place'] = get_place(db, place_id=user_dict['current_place'])
     user_dict['place_of_origin'] = get_place(db, place_id=user_dict['place_of_origin'])
-    user_dict['past_locations'] = get_places(db, place_ids=user_dict['past_locations'])
+    user_dict['past_places'] = get_places(db, place_ids=user_dict['past_places'])
     user_dict['photos'] = get_or_create_file_objects(db, photos_ids=user_dict['photos'])
 
 @router.get("/me")

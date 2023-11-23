@@ -4,7 +4,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from .base import TimeStampedModel
 from uuid import uuid4
-from .place import PlaceModel, user_past_locations_table
+from .place import PlaceModel, user_past_places_table
 from .occupation import user_occupations_table
 from .skill import user_skills_table
 from .interest import user_interests_table
@@ -35,7 +35,7 @@ class UserModel(TimeStampedModel):
 
     place_of_origin = relationship("PlaceModel", foreign_keys=[place_of_origin_id], back_populates="users_originally_from_here")
     current_place = relationship("PlaceModel", foreign_keys=[current_place_id], back_populates="users_currently_here")
-    past_locations = relationship("PlaceModel", secondary=user_past_locations_table, back_populates="users_previously_here")
+    past_places = relationship("PlaceModel", secondary=user_past_places_table, back_populates="users_previously_here")
     occupations = relationship("OccupationModel", secondary=user_occupations_table, back_populates='users')
     interests = relationship("InterestModel", secondary=user_interests_table, back_populates='users')
     skills = relationship("SkillModel", secondary=user_skills_table, back_populates='users')
@@ -70,7 +70,7 @@ class UserModel(TimeStampedModel):
 
         place_of_origin = PlaceModel(**kwargs.get('place_of_origin')) if kwargs.get('place_of_origin') is not None else None
         current_place = PlaceModel(**kwargs.get('current_place')) if kwargs.get('current_place') is not None else None
-        past_locations = kwargs.get('past_locations', [])
+        past_places = kwargs.get('past_places', [])
         occupations = kwargs.get('occupations', [])
         interests = kwargs.get('interests', [])
 
@@ -78,8 +78,8 @@ class UserModel(TimeStampedModel):
             self.place_of_origin = place_of_origin
         if current_place:
             self.current_place = current_place
-        if past_locations:
-            self.past_locations = past_locations
+        if past_places:
+            self.past_places = past_places
         if occupations:
             self.occupations = occupations
         if interests:
