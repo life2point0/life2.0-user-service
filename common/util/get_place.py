@@ -14,36 +14,40 @@ gmaps = googlemaps.Client(key=AppSettings.GOOGLE_MAPS_API_KEY)
 def get_place(db: Session, place_id: str):
     if place_id is None:
         return None
-    # Check if place_id exists in the database
+
     place = db.query(PlaceModel).filter(PlaceModel.google_place_id == place_id).first()
     if place:
-        # Return the stored place
         return place
 
-    # Fetch from Google Maps API if not found in the database
     try:
-        place_details = gmaps.place(place_id=place_id)
-        # Create a new PlaceModel instance
+        place_details = gmaps.place(place_id=place_id)['result']
+
+        country = None
+        for component in place_details.get('address_components', []):
+            if 'country' in component.get('types', []):
+                country = component.get('long_name')
+
         new_place = PlaceModel(
             google_place_id=place_id,
-            name=place_details['result']['name'],
+            name=place_details['name'],
             geolocation={
-                'lat': place_details['result']['geometry']['location']['lat'],
-                'lng': place_details['result']['geometry']['location']['lng']
+                'lat': place_details['geometry']['location']['lat'],
+                'lng': place_details['geometry']['location']['lng']
             },
+            country_code=component.get('short_name') if country else None,
+            country_name=country,
+            viewport=place_details['geometry'].get('viewport'),
             additional_details=place_details
         )
-        logging.info({
-            'google_place_id': new_place.google_place_id,
-            'place_id': place_id
-        })
-        # Add and commit to the database
+
         db.add(new_place)
         db.commit()
         db.refresh(new_place)
         return new_place
     except Exception as e:
+        logging.error(f"Error fetching place details: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+
 
 def get_places(db: Session, place_ids: List[str]):
     if place_ids is None:
