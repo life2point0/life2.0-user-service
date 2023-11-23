@@ -13,7 +13,7 @@ from app.dependencies import jwt_guard
 from common.dto import TokenDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
-from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms, keycloak_openid, keycloak_admin
+from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms, keycloak_openid, keycloak_admin, get_or_create_file_objects
 from typing import List, Callable
 from uuid import UUID
 from datetime import datetime, timedelta
@@ -103,25 +103,7 @@ def upsert_streamchat_user(user: UserModel):
     except HTTPError as e:
         logging.error(e)
         raise e
-    
-def get_photo_objects(db: DatabaseSession, photos_ids: List[str]):
-    if photos_ids is None: 
-        return None
-    try:
-        photos = db.query(FileModel).filter(FileModel.id.in_(photos_ids)).all()
-        new_photo_ids = set([str(photo_id) for photo_id in photos_ids]) - set([str(photo.id) for photo in photos])
-        for photo_id in new_photo_ids:
-            photos.append(FileModel(
-                id=UUID(photo_id),
-                bucket=AppSettings.FILE_UPLOAD_BUCKET,
-                file_extension='jpg',
-                folder='user-photos',
-                cdn_host=AppSettings.FILE_UPLOAD_CDN
-            ))
-        return photos
-    except SQLAlchemyError as e:
-        handle_sqlalchemy_error(e)
-    
+
 
 def replace_user_relations(db: DatabaseSession, user_dict: dict):
     user_dict['occupations'] = get_multi_rows(db, OccupationModel, values=user_dict['occupations'], strict=True)
@@ -131,7 +113,7 @@ def replace_user_relations(db: DatabaseSession, user_dict: dict):
     user_dict['current_place'] = get_place(db, place_id=user_dict['current_place'])
     user_dict['place_of_origin'] = get_place(db, place_id=user_dict['place_of_origin'])
     user_dict['past_locations'] = get_places(db, place_ids=user_dict['past_locations'])
-    user_dict['photos'] = get_photo_objects(db, photos_ids=user_dict['photos'])
+    user_dict['photos'] = get_or_create_file_objects(db, photos_ids=user_dict['photos'])
 
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:

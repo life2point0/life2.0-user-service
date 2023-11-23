@@ -11,7 +11,7 @@ class CommunityMemberDTO(BaseDTO):
 
 class CommunityDTO(IDNamePairResponseDTO):
     description: str
-    image: Optional[FileDTO] = None
+    photo: Optional[FileDTO] = None
     tagged_places: Optional[List[PlaceDTO]] = None
     tagged_interests: Optional[List[IDNamePairResponseDTO]] = None
     tagged_skills: Optional[List[IDNamePairResponseDTO]] = None
@@ -25,10 +25,14 @@ class CommunityDTO(IDNamePairResponseDTO):
 
 class CommunityCreateRequestDTO(IDNamePairRequestDTO):
     description: str
-    image: Optional[UUID] = None
+    photo: Optional[UUID] = None
     tagged_places: Optional[List[str]] = None
-    tagged_interests: Optional[List[str]] = None
-    tagged_skills: Optional[List[str]] = None
-    tagged_languages: Optional[List[str]] = None
-    tagged_occupations: Optional[List[str]] = None
-    members: Optional[List[str]] = None
+    tagged_interests: Optional[List[UUID]] = None
+    tagged_skills: Optional[List[UUID]] = None
+    tagged_languages: Optional[List[UUID]] = None
+    tagged_occupations: Optional[List[UUID]] = None
+    members: Optional[List[UUID]] = None
+
+class CommunityPatchRequestDTO(CommunityCreateRequestDTO):
+    members: Optional[None] = None
+    description: Optional[str] = None

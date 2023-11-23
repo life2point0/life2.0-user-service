@@ -10,14 +10,12 @@ class LatLongDTO(BaseDTO):
     lng: float
 
 class PlaceDTO(BaseDTO):
-    id: Optional[UUID] = None
     name: str
     google_place_id: str
     geolocation: LatLongDTO
     
     @validator('geolocation', pre=True, allow_reuse=True)
     def convert_wkb_to_geolocation(cls, v, values, **kwargs):
-        # Assuming 'v' is a WKBElement instance from GeoAlchemy
         if isinstance(v, WKBElement):
             # Convert WKBElement to a Shapely geometry
             geom = to_shape(v)

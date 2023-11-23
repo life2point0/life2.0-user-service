@@ -21,9 +21,9 @@ community_members_table = get_community_association_table('users', 'user_id', as
 class CommunityModel(IDNamePairModel, TimeStampedModel):
 
     description = Column(String(500), nullable=False)
-    image_id = Column(UUID, ForeignKey('files.id', name='fk__communities.image_id__files.id'))
+    photo_id = Column(UUID, ForeignKey('files.id', name='fk__communities.photo_id__files.id'))
 
-    image = relationship("FileModel", foreign_keys=[image_id])
+    photo = relationship("FileModel", foreign_keys=[photo_id])
     members = relationship('UserModel', secondary=community_members_table, back_populates=table_name)
     tagged_places = relationship('PlaceModel', secondary=community_tagged_places_table, back_populates=back_populates_property)
     tagged_interests = relationship('InterestModel', secondary=community_tagged_interests_table, back_populates=back_populates_property)
