@@ -26,10 +26,10 @@ class CommunityCreateRequestDTO(IDNamePairRequestDTO):
     description: str
     photo: Optional[UUID] = None
     tagged_places: Optional[List[str]] = None
-    tagged_interests: Optional[List[UUID]] = None
-    tagged_skills: Optional[List[UUID]] = None
-    tagged_languages: Optional[List[UUID]] = None
-    tagged_occupations: Optional[List[UUID]] = None
+    tagged_interests: Optional[List[str]] = None
+    tagged_skills: Optional[List[str]] = None
+    tagged_languages: Optional[List[str]] = None
+    tagged_occupations: Optional[List[str]] = None
     members: Optional[List[UUID]] = None
 
 class CommunityPatchRequestDTO(CommunityCreateRequestDTO):

@@ -17,4 +17,4 @@ async def get_interests(
     db: DatabaseSession = Depends(get_db),
     token_data: TokenDTO = Depends(jwt_guard)
 ):
-    return create_id_name_pair_row(db, InterestModel, name=data.name, created_by=token_data.sub)
+    return IDNamePairResponseDTO.model_validate(create_id_name_pair_row(db, InterestModel, name=data.name, created_by=token_data.sub))

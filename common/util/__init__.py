@@ -3,7 +3,7 @@ from .handle_sql_alchemy_error import handle_sqlalchemy_error
 from .get_id_name_pair_paginated_response import get_id_name_pair_paginated_response
 from .create_id_name_pair_row import create_id_name_pair_row
 from .get_multiple_rows import get_multi_rows
-from .get_place import get_place, get_places
+from .get_place import get_place, get_places, get_place_id_from_name
 from .datetime_from_epoch_ms import datetime_from_epoch_ms
 from .keycloak import keycloak_admin, keycloak_openid
 from .stream_chat import create_stream_chat_channel, update_stream_chat_channel

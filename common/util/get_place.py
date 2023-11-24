@@ -56,3 +56,16 @@ def get_places(db: Session, place_ids: List[str]):
     for place_id in place_ids:
         places.append(get_place(db, place_id))
     return places
+
+
+def get_place_id_from_name(place_name):
+    
+    # Perform the geocoding request
+    geocode_result = gmaps.geocode(place_name)
+
+    if geocode_result:
+        # Assuming the first result is the most relevant
+        place_id = geocode_result[0]['place_id']
+        return place_id
+    else:
+        return None

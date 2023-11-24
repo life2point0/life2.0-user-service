@@ -27,7 +27,7 @@ def create_id_name_pair_row(
             db.add(row)
             db.commit()
             db.refresh(row)
-        return IDNamePairResponseDTO.model_validate(row)
+        return row
     except SQLAlchemyError as e:
         db.rollback()
         handle_sqlalchemy_error(e)

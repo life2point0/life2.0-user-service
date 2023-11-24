@@ -18,4 +18,4 @@ async def get_skills(
     db: DatabaseSession = Depends(get_db),
     token_data: TokenDTO = Depends(jwt_guard)
 ):
-    return create_id_name_pair_row(db, SkillModel, created_by=token_data.sub, name=data.name)
+    return IDNamePairResponseDTO.model_validate(create_id_name_pair_row(db, SkillModel, created_by=token_data.sub, name=data.name))
