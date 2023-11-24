@@ -1,4 +1,4 @@
-from cachetools import TTLCache
+from cachetools import TTLCache, cached
 from sqlalchemy import func, Integer, case, or_, func
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import case, cast
@@ -12,9 +12,9 @@ from common.util import handle_sqlalchemy_error
 logging.basicConfig(level=logging.DEBUG) 
 
 # Create a TTL cache instance
-cache = TTLCache(maxsize=1024, ttl=3600)  # Adjust maxsize and ttl as needed
+recommendation_cache = TTLCache(maxsize=1024, ttl=3600) 
 
-# @cached(cache)
+@cached(recommendation_cache)
 def get_community_recommendations(session: Session, user_id: str, page_number: int = 0, per_page: int = 10):
     user = session.query(UserModel).filter(UserModel.id == user_id).one_or_none()
 
@@ -100,7 +100,10 @@ def get_community_recommendations(session: Session, user_id: str, page_number: i
     return communities_list, total
 
 
+# Create a TTL cache instance
+search_cache = TTLCache(maxsize=1024, ttl=3600) 
 
+@cached(search_cache)
 def get_community_search_results(
     db: DatabaseSession,
     per_page: Optional[int] = 0,

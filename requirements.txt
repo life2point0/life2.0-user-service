@@ -12,3 +12,4 @@ boto3==1.28.73
 Shapely==2.0.2
 googlemaps==4.10.0
 geoalchemy2[shapely]
+cachetools==5.3.2
