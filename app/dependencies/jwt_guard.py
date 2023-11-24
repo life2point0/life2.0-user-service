@@ -1,6 +1,7 @@
 from fastapi import HTTPException, Header
 from pydantic import ValidationError
 from common.dto import TokenDTO
+from typing import Optional
 from jose import jwt
 from app.settings import AppSettings
 import requests
@@ -37,3 +38,13 @@ def jwt_guard(authorization: str = Header(...)) -> TokenDTO:
         
     except ValidationError as e:
         raise HTTPException(status_code=401, detail="Token payload validation failed")
+
+def jwt_optional(authorization: Optional[str] = Header(None)) -> Optional[TokenDTO]:
+    if authorization:
+        try:
+            # Call the original jwt_guard function if the Authorization header is present
+            return jwt_guard(authorization=authorization)
+        except HTTPException:
+            # If jwt_guard raises an HTTPException (e.g., token is invalid or expired), return None
+            return None
+    return None

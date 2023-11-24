@@ -1,1 +1,1 @@
-from .jwt_guard import jwt_guard
+from .jwt_guard import jwt_guard, jwt_optional

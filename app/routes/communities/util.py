@@ -1,10 +1,16 @@
-from cachetools import TTLCache, cached
-from cachetools.keys import hashkey
-from sqlalchemy import func, select, desc, Integer
-from sqlalchemy.orm import Session, aliased
+from cachetools import TTLCache
+from sqlalchemy import func, Integer, case, or_, func
+from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import case, cast
 from app.models import UserModel, CommunityModel, PlaceModel, SkillModel, LanguageModel, InterestModel, OccupationModel
+from fastapi import HTTPException
+from typing import Optional
+from app.database import DatabaseSession
 import logging
+from sqlalchemy.exc import SQLAlchemyError
+from common.util import handle_sqlalchemy_error
+
+logging.basicConfig(level=logging.DEBUG) 
 
 # Create a TTL cache instance
 cache = TTLCache(maxsize=1024, ttl=3600)  # Adjust maxsize and ttl as needed
@@ -85,3 +91,49 @@ def get_community_recommendations(session: Session, user_id: str, page_number: i
     communities_list = [result[0] for result in communities]
 
     return communities_list, total
+
+
+
+def get_community_search_results(
+    db: DatabaseSession,
+    per_page: Optional[int] = 0,
+    page_number: Optional[int] = 0,
+    ids: Optional[str] = None,
+    query: Optional[str] = None
+):
+    try:
+        db_query = db.query(CommunityModel)
+        if ids:
+            id_list = ids.split(',')
+            ordering = case(
+                {id_value: index for index, id_value in enumerate(id_list)},
+                value=CommunityModel.id
+            )
+            db_query = db_query.filter(CommunityModel.id.in_(id_list)).order_by(ordering)
+        
+        if query:
+            query_length = len(query)
+            name_hits = (func.length(CommunityModel.name) - func.length(func.replace(CommunityModel.name, query, ''))) / query_length
+            description_hits = (func.length(CommunityModel.description) - func.length(func.replace(CommunityModel.description, query, ''))) / query_length
+
+            # Apply weightage to name hits
+            weighted_name_hits = 1.5 * name_hits
+
+            total_hits = weighted_name_hits + description_hits
+            db_query = db_query.filter(or_(
+                CommunityModel.name.ilike(f'%{query}%'), 
+                CommunityModel.description.ilike(f'%{query}%')
+            ))
+            db_query = db_query.order_by(total_hits.desc(), CommunityModel.id)
+
+        total = db_query.count()
+        offset = page_number * per_page
+        db_query = db_query.limit(per_page).offset(offset)
+        
+        communities = db_query.all()
+
+        return communities, total
+        
+    except SQLAlchemyError as e:
+        handle_sqlalchemy_error(e)
+
