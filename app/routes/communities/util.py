@@ -3,7 +3,6 @@ from sqlalchemy import func, Integer, case, or_, func
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import case, cast
 from app.models import UserModel, CommunityModel, PlaceModel, SkillModel, LanguageModel, InterestModel, OccupationModel
-from fastapi import HTTPException
 from typing import Optional
 from app.database import DatabaseSession
 import logging
@@ -72,12 +71,20 @@ def get_community_recommendations(session: Session, user_id: str, page_number: i
         match_score.label('match_score')
     ).subquery()
 
+    # Subquery to check if the user is a member of a community
+    member_subq = session.query(CommunityModel.members).filter(
+        CommunityModel.members.any(UserModel.id == user_id)
+    ).subquery()
+
     # Main query to fetch communities and their scores
     communities_query = session.query(
         CommunityModel,
         community_scores_subq.c.match_score
     ).join(
         community_scores_subq, CommunityModel.id == community_scores_subq.c.community_id
+    ).filter(
+        # Exclude communities where the user is already a member
+        ~CommunityModel.id.in_(member_subq)
     ).order_by(
         community_scores_subq.c.match_score.desc(), CommunityModel.id
     )

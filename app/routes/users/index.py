@@ -1,16 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
-from app.models import UserModel, PlaceModel
+from app.models import UserModel, PlaceModel, CommunityModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError, KeycloakOpenID
-from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, RefreshTokenRequestDTO, UserLoginRequestDTO, UserLoginResponseDTO, RefreshTokenRequestDTO
+from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO
 import logging
 import json
 from stream_chat import StreamChat
 from app.dependencies import jwt_guard
-from common.dto import TokenDTO
+from common.dto import TokenDTO, PaginatedResponseDTO
 from .user_photos import user_photo_routes
 from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
 from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms, keycloak_openid, keycloak_admin, get_or_create_file_objects
@@ -18,6 +18,7 @@ from typing import List, Callable
 from uuid import UUID
 from datetime import datetime, timedelta
 from requests import HTTPError
+from app.routes.communities.dto import CommunityDTO
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -199,33 +200,48 @@ async def signup(
     return UserPartialDTO(**user_dict)
 
 @router.post('/me/communities')
-def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard)):
+def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)):
+    user_id = token_data.sub
+    community_id = payload.community_id
     channel = stream_chat.channel("community", payload.community_id)
-    channel.add_members([token_data.sub])
+    try:
+        user = db.query(UserModel).options(joinedload(UserModel.communities)).filter(UserModel.id == user_id).first()
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        community = db.query(CommunityModel).filter(CommunityModel.id == community_id).first()
+        if community is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        user.communities.append(community)
+        channel.add_members([token_data.sub])
+        db.commit()
+    except SQLAlchemyError as e:
+        if isinstance(e, IntegrityError):
+            raise HTTPException(status_code=status.HTTP_202_ACCEPTED, detail="You are already a member of this community")
+        else:
+            channel.remove_members([token_data.sub])
+            handle_sqlalchemy_error(e)
+    except HTTPError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e.response.json()))
+    
 
 
 @router.get('/me/communities')
-def join_community(token_data: TokenDTO = Depends(jwt_guard)):
-    filter_conditions = {
-        "type": "community",
-        "members": {"$in": [token_data.sub]}
-    }
-    sort = {"created_at": -1}
-    response = stream_chat.query_channels(filter_conditions, sort=sort)
-    return response
+def list_user_communities(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)):
+    user = db.query(UserModel).options(joinedload(UserModel.communities)).filter(UserModel.id == token_data.sub).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return [CommunityDTO.model_validate(community) for community in user.communities]
 
 
 @router.get('/me/tokens')
-def join_community(token_data: TokenDTO = Depends(jwt_guard)):
+def get_tokens(token_data: TokenDTO = Depends(jwt_guard)) -> ThirdPartyTokenResponseDTO:
     now = datetime.utcnow()
     token = stream_chat.create_token(
         token_data.sub, 
         iat = now,
         exp = now + timedelta(hours=1)
     )
-    return {
-        "stream_chat": token
-    }
+    return ThirdPartyTokenResponseDTO(stream_chat=token)
 
 
 router.include_router(user_photo_routes, prefix="/me/photos")

@@ -83,3 +83,6 @@ class UserLogoutRequestDTO(BaseDTO):
 class JoinCommunityDTO(BaseDTO):
     community_id: str = Field(...)
 
+class ThirdPartyTokenResponseDTO(BaseDTO):
+    stream_chat: str
+
