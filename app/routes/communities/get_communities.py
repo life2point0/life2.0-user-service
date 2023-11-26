@@ -25,7 +25,7 @@ def community_list(
     per_page = pagination_params.per_page
     query = pagination_params.query
     try:
-        if user_id is not None and query is None and ids is None:
+        if user_id is not None and not query and not ids:
             communities, total = get_community_recommendations(
                 db, 
                 user_id, 
