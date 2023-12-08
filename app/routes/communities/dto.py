@@ -6,7 +6,7 @@ class CommunityMemberDTO(BaseDTO):
     id: UUID
     first_name: str
     last_name: str
-    profile_photo: FileDTO
+    profile_photo: Optional[FileDTO] = None
 
 class CommunityDTO(IDNamePairResponseDTO):
     description: Optional[str]
