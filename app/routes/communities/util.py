@@ -1,4 +1,4 @@
-from cachetools import TTLCache, cached
+from cachetools import TTLCache, cached, keys
 from sqlalchemy import func, Integer, case, or_, func
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import case, cast
@@ -14,7 +14,11 @@ logging.basicConfig(level=logging.DEBUG)
 # Create a TTL cache instance
 recommendation_cache = TTLCache(maxsize=1024, ttl=3600) 
 
-@cached(recommendation_cache)
+# Cache key
+def get_cache_key(*args, **kwargs):
+    return keys.hashkey(*args[1:], **kwargs)
+
+@cached(recommendation_cache, get_cache_key)
 def get_community_recommendations(session: Session, user_id: str, page_number: int = 0, per_page: int = 10):
     user = session.query(UserModel).filter(UserModel.id == user_id).one_or_none()
 
@@ -72,7 +76,7 @@ def get_community_recommendations(session: Session, user_id: str, page_number: i
     ).subquery()
 
     # Subquery to check if the user is a member of a community
-    member_subq = session.query(CommunityModel.members).filter(
+    member_subq = session.query(CommunityModel.id).filter(
         CommunityModel.members.any(UserModel.id == user_id)
     ).subquery()
 
