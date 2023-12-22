@@ -5,7 +5,7 @@ from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
 from app.models import UserModel, PlaceModel, CommunityModel
 from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError, KeycloakOpenID
-from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO
+from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO, UserPublicInfoDTO
 import logging
 import json
 from stream_chat import StreamChat
@@ -119,6 +119,11 @@ def replace_user_relations(db: DatabaseSession, user_id: UUID, user_dict: dict):
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
     return get_user_by_user_id(db, user_id=token_data.sub)
+
+@router.get("/{user_id}")
+def get_current_user(user_id: UUID, token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)):
+    user = get_user_by_user_id(db, user_id)
+    return UserPartialDTO.model_validate(user) if user_id == token_data.sub else UserPublicInfoDTO.model_validate(user)
 
 @router.patch("/me")
 def update_current_user(

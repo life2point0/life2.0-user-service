@@ -5,7 +5,6 @@ from common.util import to_camel
 from pydantic import EmailStr
 from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO, FileDTO
 from uuid import UUID
-from datetime import datetime
 
 app = FastAPI()
 
@@ -27,13 +26,10 @@ class UserDTO(BaseDTO):
 
 
 # TODO: Cleanup UserPartialDTO and separate out Request DTO and Response DTO.
-class UserPartialDTO(BaseDTO):
+class UserPublicInfoDTO(BaseDTO):
     id: UUID = Field(None)
     first_name: Optional[str] = Field(None, example="John", pattern=NAME_REGEX)
     last_name: Optional[str] = Field(None, example="Smith", pattern=NAME_REGEX)
-    phone_country_code: Optional[str] = Field(None, example="123456789", pattern="^\d{1,3}$")
-    phone_number: Optional[str] = Field(None, example="1234567890", pattern="^\d{10}$")
-    email: Optional[EmailStr] = None
     place_of_origin: Optional[PlaceDTO] = None  # Assuming PlaceDTO is imported or defined elsewhere
     past_places: Optional[List[PlaceDTO]] = []
     current_place: Optional[PlaceDTO] = None
@@ -44,6 +40,11 @@ class UserPartialDTO(BaseDTO):
     languages: Optional[List[IDNamePairResponseDTO]] = []
     photos: Optional[List[FileDTO]] = []
     joined_at: Optional[int] = None
+
+class UserPartialDTO(UserPublicInfoDTO):
+    phone_country_code: Optional[str] = Field(None, example="123456789", pattern="^\d{1,3}$")
+    phone_number: Optional[str] = Field(None, example="1234567890", pattern="^\d{10}$")
+    email: Optional[EmailStr] = None
 
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)
