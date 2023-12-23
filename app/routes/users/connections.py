@@ -12,7 +12,7 @@ from uuid import uuid4
 from common.util import handle_sqlalchemy_error, create_one_to_one_stream_chat_channel
 from common.dto import PaginationParams, PaginatedResponseDTO
 from typing import Optional
-from .dto import UserPartialDTO
+from .dto import UserPublicInfoDTO
 
 # Import your SQLAlchemy models and database session setup here
 # For example:
@@ -90,7 +90,7 @@ def get_user_connections(
             per_page
         )
         connected_users = query.offset(page_number * per_page).limit(per_page).all()
-        return PaginatedResponseDTO[UserPartialDTO](
+        return PaginatedResponseDTO[UserPublicInfoDTO](
             data=connected_users,
             per_page=per_page,
             page_number=page_number,
