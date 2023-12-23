@@ -243,7 +243,7 @@ def list_user_communities(token_data: TokenDTO = Depends(jwt_guard), db: Databas
 def get_tokens(token_data: TokenDTO = Depends(jwt_guard)) -> ThirdPartyTokenResponseDTO:
     now = datetime.utcnow()
     token = stream_chat.create_token(
-        token_data.sub, 
+        str(token_data.sub), 
         iat = now,
         exp = now + timedelta(hours=1)
     )
