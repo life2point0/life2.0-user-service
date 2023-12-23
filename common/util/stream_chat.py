@@ -51,5 +51,18 @@ def update_stream_chat_channel(channel_id: UUID, channel_data: Dict, channel_typ
     except Exception as e:
         logging.error(f"Failed to update Stream Chat channel: {e}")
         raise e
+    
+
+# Function to create a Stream Chat channel
+def create_one_to_one_stream_chat_channel(user_1: UUID, user_2: UUID, channel_type: str = 'messaging'):
+    try:
+        channel = stream_client.channel(channel_type, data={
+            "members": [str(user_1), str(user_2)]
+        })
+        channel.create(str(user_1))
+
+    except Exception as e:
+        logging.error(f"Failed to create Stream Chat channel: {e}")
+        raise e
 
 

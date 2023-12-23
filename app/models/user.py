@@ -42,6 +42,27 @@ class UserModel(TimeStampedModel):
     languages = relationship("LanguageModel", secondary=user_languages_table, back_populates='users')
     photos = relationship("FileModel", secondary=user_photos_table)
     communities = relationship("CommunityModel", secondary=community_members_table, back_populates="members")
+    connected_users = relationship(
+        "UserModel",
+        secondary="user_connections",
+        primaryjoin="UserModel.id==UserConnectionModel.user_id",
+        secondaryjoin="UserModel.id==UserConnectionModel.connected_user_id",
+        viewonly=True
+    )
+    incoming_connection_requests = relationship(
+        "UserConnectionRequestModel",
+        foreign_keys="[UserConnectionRequestModel.requested_user_id]",
+        back_populates="requested_user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    outgoing_connection_requests = relationship(
+        "UserConnectionRequestModel",
+        foreign_keys="[UserConnectionRequestModel.requester_user_id]",
+        back_populates="requester_user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     @hybrid_property
     def joined_at(self):

@@ -3,22 +3,23 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
-from app.models import UserModel, PlaceModel, CommunityModel
-from keycloak import KeycloakAdmin, KeycloakGetError, KeycloakError, KeycloakOpenID
+from app.models import UserModel, CommunityModel
+from keycloak import KeycloakGetError, KeycloakError
 from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO, UserPublicInfoDTO
 import logging
 import json
 from stream_chat import StreamChat
 from app.dependencies import jwt_guard
-from common.dto import TokenDTO, PaginatedResponseDTO
+from common.dto import TokenDTO
 from .user_photos import user_photo_routes
-from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel, FileModel
+from app.models import OccupationModel, SkillModel, LanguageModel, InterestModel
 from common.util import get_multi_rows, get_place, get_places, handle_sqlalchemy_error, datetime_from_epoch_ms, keycloak_openid, keycloak_admin, get_or_create_file_objects
-from typing import List, Callable
+from typing import Callable
 from uuid import UUID
 from datetime import datetime, timedelta
 from requests import HTTPError
 from app.routes.communities.dto import CommunityDTO
+from .connections import user_connections_routes
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -250,3 +251,5 @@ def get_tokens(token_data: TokenDTO = Depends(jwt_guard)) -> ThirdPartyTokenResp
 
 
 router.include_router(user_photo_routes, prefix="/me/photos")
+# router.include_router(user_connections_routes, prefix="/me/connections")
+router.include_router(user_connections_routes, prefix="/{user_id}/connections")

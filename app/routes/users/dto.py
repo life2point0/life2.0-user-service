@@ -87,3 +87,5 @@ class JoinCommunityDTO(BaseDTO):
 class ThirdPartyTokenResponseDTO(BaseDTO):
     stream_chat: str
 
+class CreateUserConnectionRequestDTO(BaseDTO):
+    user_id: UUID
