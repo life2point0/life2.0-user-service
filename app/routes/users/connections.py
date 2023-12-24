@@ -12,7 +12,7 @@ from uuid import uuid4
 from common.util import handle_sqlalchemy_error, create_one_to_one_stream_chat_channel
 from common.dto import PaginationParams, PaginatedResponseDTO
 from typing import Optional
-from .dto import UserPublicInfoDTO
+from .dto import UserPublicInfoDTO, CreateUserConnectionResponseDTO
 
 # Import your SQLAlchemy models and database session setup here
 # For example:
@@ -57,7 +57,8 @@ def create_connection_request(
             db.add(user_connection)
             db.commit()
 
-        create_one_to_one_stream_chat_channel(user_1, user_2)
+        channel = create_one_to_one_stream_chat_channel(user_1, user_2)
+        return CreateUserConnectionResponseDTO(channel_id=channel.id)
 
     except SQLAlchemyError as e:
         handle_sqlalchemy_error(e)

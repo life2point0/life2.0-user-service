@@ -60,6 +60,7 @@ def create_one_to_one_stream_chat_channel(user_1: UUID, user_2: UUID, channel_ty
             "members": [str(user_1), str(user_2)]
         })
         channel.create(str(user_1))
+        return channel
 
     except Exception as e:
         logging.error(f"Failed to create Stream Chat channel: {e}")

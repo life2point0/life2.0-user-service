@@ -89,3 +89,6 @@ class ThirdPartyTokenResponseDTO(BaseDTO):
 
 class CreateUserConnectionRequestDTO(BaseDTO):
     user_id: UUID
+
+class CreateUserConnectionResponseDTO(BaseDTO):
+    channel_id: str
