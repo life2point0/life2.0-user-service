@@ -3,9 +3,9 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
-from app.models import UserModel, CommunityModel
+from app.models import UserModel, CommunityModel, UserConnectionModel
 from keycloak import KeycloakGetError, KeycloakError
-from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO, UserPublicInfoDTO
+from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO, UserConnectionInfoDTO
 import logging
 import json
 from stream_chat import StreamChat
@@ -117,6 +117,26 @@ def replace_user_relations(db: DatabaseSession, user_id: UUID, user_dict: dict):
     user_dict['past_places'] = get_places(db, place_ids=user_dict['past_places'])
     user_dict['photos'] = get_or_create_file_objects(db, user_id=user_id, file_ids=user_dict['photos'])
 
+def is_user_a_connection(db: DatabaseSession, current_user_id: UUID, target_user_id: UUID) -> bool:
+    # Check if there's a connection between the current user and the target user
+    connection = (
+        db.query(UserConnectionModel)
+        .filter(
+            (
+                (UserConnectionModel.user_id == current_user_id)
+                & (UserConnectionModel.connected_user_id == target_user_id)
+            )
+            | (
+                (UserConnectionModel.user_id == target_user_id)
+                & (UserConnectionModel.connected_user_id == current_user_id)
+            )
+        )
+        .first()
+    )
+    
+    # If a connection exists, the users are connected
+    return connection is not None
+
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
     return get_user_by_user_id(db, user_id=token_data.sub)
@@ -124,7 +144,13 @@ def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSess
 @router.get("/{user_id}")
 def get_current_user(user_id: UUID, token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)):
     user = get_user_by_user_id(db, user_id)
-    return UserPartialDTO.model_validate(user) if user_id == token_data.sub else UserPublicInfoDTO.model_validate(user)
+    if user_id == token_data.sub:
+        return UserPartialDTO.model_validate(user) 
+    else:
+        user_dto = UserConnectionInfoDTO.model_validate(user)
+        user_dto.is_connection = is_user_a_connection(db, token_data.sub, user_id)
+        return user_dto
+
 
 @router.patch("/me")
 def update_current_user(
@@ -252,4 +278,4 @@ def get_tokens(token_data: TokenDTO = Depends(jwt_guard)) -> ThirdPartyTokenResp
 
 router.include_router(user_photo_routes, prefix="/me/photos")
 # router.include_router(user_connections_routes, prefix="/me/connections")
-router.include_router(user_connections_routes, prefix="/{user_id}/connections")
+router.include_router(user_connections_routes, prefix="/{user_id}/connections", tags=["connections"])

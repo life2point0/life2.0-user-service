@@ -12,7 +12,7 @@ from uuid import uuid4
 from common.util import handle_sqlalchemy_error, create_one_to_one_stream_chat_channel
 from common.dto import PaginationParams, PaginatedResponseDTO
 from typing import Optional
-from .dto import UserPublicInfoDTO, CreateUserConnectionResponseDTO
+from .dto import UserConnectionInfoDTO, CreateUserConnectionResponseDTO
 
 # Import your SQLAlchemy models and database session setup here
 # For example:
@@ -27,7 +27,7 @@ def create_connection_request(
     request_data: CreateUserConnectionRequestDTO,
     token_data: TokenDTO = Depends(jwt_guard),
     db: Session = Depends(get_db),
-):
+) -> CreateUserConnectionResponseDTO:
     if user_id != 'me' and user_id != str(token_data.sub): 
         raise HTTPException(403, "Forbidden")
     try:
@@ -71,7 +71,7 @@ def get_user_connections(
     pagination_params: PaginationParams = Depends(),
     token_data: TokenDTO = Depends(jwt_optional),
     db: Session = Depends(get_db),
-):
+) -> PaginatedResponseDTO[UserConnectionInfoDTO]:
     if (user_id == 'me' and token_data.sub is None):
        raise HTTPException(401, "Access Denied")
     try:
@@ -91,7 +91,7 @@ def get_user_connections(
             per_page
         )
         connected_users = query.offset(page_number * per_page).limit(per_page).all()
-        return PaginatedResponseDTO[UserPublicInfoDTO](
+        return PaginatedResponseDTO[UserConnectionInfoDTO](
             data=connected_users,
             per_page=per_page,
             page_number=page_number,

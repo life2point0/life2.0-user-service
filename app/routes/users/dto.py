@@ -46,6 +46,9 @@ class UserPartialDTO(UserPublicInfoDTO):
     phone_number: Optional[str] = Field(None, example="1234567890", pattern="^\d{10}$")
     email: Optional[EmailStr] = None
 
+class UserConnectionInfoDTO(UserPublicInfoDTO):
+    is_connection: Optional[str] = Field(False)
+
 class UserUpdateDTO(UserPartialDTO):
     id: Optional[UUID] = Field(None)
     joined_at: None = Field(None)
