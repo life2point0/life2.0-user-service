@@ -277,5 +277,4 @@ def get_tokens(token_data: TokenDTO = Depends(jwt_guard)) -> ThirdPartyTokenResp
 
 
 router.include_router(user_photo_routes, prefix="/me/photos")
-# router.include_router(user_connections_routes, prefix="/me/connections")
 router.include_router(user_connections_routes, prefix="/{user_id}/connections", tags=["connections"])

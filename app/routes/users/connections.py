@@ -73,7 +73,7 @@ def get_user_connections(
     db: Session = Depends(get_db),
 ) -> PaginatedResponseDTO[UserConnectionInfoDTO]:
     if (user_id == 'me' and token_data.sub is None):
-       raise HTTPException(401, "Access Denied")
+       raise HTTPException(403, "Forbidden")
     try:
         query_user_id = token_data.sub if user_id == 'me' else user_id
         page_number = pagination_params.page_number or 0
