@@ -98,6 +98,10 @@ def get_community_recommendations(session: Session, user_id: str, page_number: i
     total = communities_query.count()
     communities = communities_query.offset(offset_value).limit(per_page).all()
 
+    # Log community scores
+    for community, match_score in communities:
+        logging.debug(f"Community ID: {community.name}, Match Score: {match_score}")
+
     # Extract CommunityModel instances from the results
     communities_list = [result[0] for result in communities]
 

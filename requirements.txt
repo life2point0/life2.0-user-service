@@ -14,3 +14,4 @@ googlemaps==4.10.0
 geoalchemy2[shapely]
 cachetools==5.3.2
 stream-chat==4.11.0
+firebase-admin==6.3.0

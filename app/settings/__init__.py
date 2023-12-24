@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     S3_ENDPOINT: str = "https://s3.me-central-1.amazonaws.com"
     AWS_DEFAULT_REGION: str = "me-central-1"
     GOOGLE_MAPS_API_KEY: str
+    FIREBASE_KEY_JSON: str
 
     class Config:
         env_file = ".env"

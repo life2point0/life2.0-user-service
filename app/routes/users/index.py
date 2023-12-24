@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from requests import HTTPError
 from app.routes.communities.dto import CommunityDTO
 from .connections import user_connections_routes
+from firebase_admin import messaging
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -274,6 +275,24 @@ def get_tokens(token_data: TokenDTO = Depends(jwt_guard)) -> ThirdPartyTokenResp
         exp = now + timedelta(hours=1)
     )
     return ThirdPartyTokenResponseDTO(stream_chat=token)
+
+@router.get('/me/tokens/fcm')
+def set_fcm_token(token_data: TokenDTO = Depends(jwt_guard)):
+    deviceRes = stream_chat.get_devices(token_data.sub)
+    tokens = [str(device['id']) for device in deviceRes['devices']]
+    message = messaging.MulticastMessage(
+        tokens = [str(device['id']) for device in deviceRes['devices'] if 'id' in device and device['id']],
+        android=messaging.AndroidConfig(
+            notification=messaging.AndroidNotification(
+                channel_id='new-matching-user',
+                icon='https://bulma.io/images/placeholders/96x96.png',
+                title='Tabrez just joined Life 2.0'
+            ),
+            collapse_key='new-matching-user'
+        )
+    )
+    messaging.send_multicast(message)
+    return tokens
 
 
 router.include_router(user_photo_routes, prefix="/me/photos")

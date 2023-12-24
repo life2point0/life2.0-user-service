@@ -8,6 +8,10 @@ from app.routes.interests import interests_router
 from app.routes.languages import languages_router
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.openapi.utils import get_openapi
+from fastapi import FastAPI
+from firebase_admin import credentials, initialize_app
+from app.settings import AppSettings
+import json
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -54,3 +58,9 @@ app.include_router(interests_router, tags=['interests'])
 
 # /languages
 app.include_router(languages_router, tags=['languages'])
+
+@app.on_event('startup')
+def startup():
+    # Initialize firebase
+    creds = credentials.Certificate(json.loads(AppSettings.FIREBASE_KEY_JSON))
+    initialize_app(creds)
