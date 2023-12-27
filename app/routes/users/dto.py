@@ -5,6 +5,8 @@ from common.util import to_camel
 from pydantic import EmailStr
 from common.dto import PlaceDTO, IDNamePairResponseDTO, BaseDTO, FileDTO
 from uuid import UUID
+from common.dto.notifications import NotificationType, BaseNotificationTemplate
+from datetime import datetime
 
 app = FastAPI()
 
@@ -45,6 +47,7 @@ class UserPartialDTO(UserPublicInfoDTO):
     phone_country_code: Optional[str] = Field(None, example="123456789", pattern="^\d{1,3}$")
     phone_number: Optional[str] = Field(None, example="1234567890", pattern="^\d{10}$")
     email: Optional[EmailStr] = None
+    is_profile_created: Optional[bool] = None
 
 class UserConnectionInfoDTO(UserPublicInfoDTO):
     is_connection: Optional[str] = Field(False)
@@ -95,3 +98,13 @@ class CreateUserConnectionRequestDTO(BaseDTO):
 
 class CreateUserConnectionResponseDTO(BaseDTO):
     channel_id: str
+
+class PatchUserParams(BaseDTO):
+    notification_type: Optional[NotificationType] = None
+
+class NotificationDTO(BaseNotificationTemplate):
+    is_read: bool
+    created_at: datetime
+
+class MarkAllNotificationsReadDTO(BaseDTO):
+    pass

@@ -8,6 +8,5 @@ from .file import FileModel
 from .community import CommunityModel
 from .user_connection_request import UserConnectionRequestModel
 from .user_connection import UserConnectionModel
+from .notification import NotificationModel
 from .base import BaseModel, TimeStampedModel
-
-

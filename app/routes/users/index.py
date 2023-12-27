@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.settings import AppSettings
 from app.database import get_db, DatabaseSession
-from app.models import UserModel, CommunityModel, UserConnectionModel
+from app.models import UserModel, CommunityModel, UserConnectionModel, NotificationModel
 from keycloak import KeycloakGetError, KeycloakError
-from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO, UserConnectionInfoDTO
+from .dto import UserUpdateDTO, UserPartialDTO, UserSignupDTO, JoinCommunityDTO, ThirdPartyTokenResponseDTO, UserConnectionInfoDTO, PatchUserParams
 import logging
 import json
 from stream_chat import StreamChat
@@ -21,6 +21,9 @@ from requests import HTTPError
 from app.routes.communities.dto import CommunityDTO
 from .connections import user_connections_routes
 from firebase_admin import messaging
+from .util import find_top_matching_users
+from common.dto.notifications import NotificationType, NewUserJoinedNotification
+from .notifications import user_notifications_routes
 
 logging.basicConfig(level=logging.DEBUG) 
 router = APIRouter()
@@ -68,27 +71,28 @@ def update_keycloak_user(user: UserModel) -> Callable:
         raise e
 
 
-def get_user_by_user_id(db: DatabaseSession, user_id: str):
+def get_user_by_user_id(db: DatabaseSession, user_id: str, exclude_relations: bool = False):
+    options = [] if exclude_relations else [
+        joinedload(UserModel.place_of_origin),
+        joinedload(UserModel.current_place),
+        joinedload(UserModel.past_places),
+        joinedload(UserModel.occupations),
+        joinedload(UserModel.interests),
+        joinedload(UserModel.skills),
+        joinedload(UserModel.languages),
+        joinedload(UserModel.photos),
+    ]
     user = (
         db.query(UserModel)
-            .options(
-                joinedload(UserModel.place_of_origin),
-                joinedload(UserModel.current_place),
-                joinedload(UserModel.past_places),
-                joinedload(UserModel.occupations),
-                joinedload(UserModel.interests),
-                joinedload(UserModel.skills),
-                joinedload(UserModel.languages),
-                joinedload(UserModel.photos),
-            )
+            .options(*options)
             .filter(UserModel.id == user_id)
             .first()
     )
 
     if user is None:
-        return get_keycloak_user(user_id)
+        return get_keycloak_user(user_id), False
     
-    return user
+    return user, True
 
 
 def upsert_streamchat_user(user: UserModel):
@@ -138,13 +142,52 @@ def is_user_a_connection(db: DatabaseSession, current_user_id: UUID, target_user
     # If a connection exists, the users are connected
     return connection is not None
 
+
+def notify_matching_users(db: DatabaseSession, user_id: UUID, notification_type: NotificationType):
+
+    user, _ = get_user_by_user_id(db, user_id)
+    if (notification_type == NotificationType.NEW_USER_JOINED): 
+        notif_template = NewUserJoinedNotification(user)
+    else:
+        return
+    
+    top_matches = find_top_matching_users(db, user_id)
+    user_ids = [match['user_id'] for match in top_matches]
+    users = [
+        NotificationModel(
+            data=json.loads(notif_template.model_dump_json(by_alias=True)),
+            target_user_id=user_id
+        ) 
+    for user_id in user_ids]
+    logging.debug(users)
+    db.add_all(users)
+    db.commit()
+
+    chat_users = [stream_chat.get_devices(user_id) for user_id in user_ids]
+    device_tokens = []
+
+    for chat_user in chat_users:
+        for device in chat_user["devices"]:
+            device_tokens.append(device["id"])
+
+
+    message = messaging.MulticastMessage(
+        tokens = device_tokens,
+        android = notif_template.android
+    )
+    messaging.send_multicast(message)
+    print(device_tokens)
+
 @router.get("/me")
 def get_current_user(token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)) -> UserPartialDTO:
-    return get_user_by_user_id(db, user_id=token_data.sub)
+    user, is_profile_created = get_user_by_user_id(db, user_id=token_data.sub)
+    res = UserPartialDTO.model_validate(user)
+    res.is_profile_created = is_profile_created
+    return res
 
 @router.get("/{user_id}")
 def get_current_user(user_id: UUID, token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)):
-    user = get_user_by_user_id(db, user_id)
+    user, _ = get_user_by_user_id(db, user_id)
     if user_id == token_data.sub:
         return UserPartialDTO.model_validate(user) 
     else:
@@ -156,6 +199,8 @@ def get_current_user(user_id: UUID, token_data: TokenDTO = Depends(jwt_guard), d
 @router.patch("/me")
 def update_current_user(
         user_data: UserUpdateDTO,
+        background_tasks: BackgroundTasks,
+        query_params: PatchUserParams = Depends(),
         token_data: TokenDTO = Depends(jwt_guard), 
         db: DatabaseSession = Depends(get_db)
     ) -> UserPartialDTO:
@@ -178,7 +223,8 @@ def update_current_user(
 
         user_dict = user_data.model_dump()
 
-        is_email_changed = user_dict['email'] is not None
+        print(user_dict)
+        is_email_changed = user_dict.get('email') is not None
         is_name_changed = user_dict['first_name'] is not None or user_dict['last_name'] is not None
         is_photos_changed = user_dict['photos'] is not None
 
@@ -202,6 +248,9 @@ def update_current_user(
         
         db.commit()
         db.refresh(user)
+        if query_params.notification_type is not None:
+            background_tasks.add_task(notify_matching_users, db, user_id, query_params.notification_type)
+            # notify_matching_users(db, user_id, query_params.notification_type)
         return user
     except SQLAlchemyError as e:
         handle_sqlalchemy_error(e)
@@ -293,7 +342,9 @@ def set_fcm_token(token_data: TokenDTO = Depends(jwt_guard)):
     )
     messaging.send_multicast(message)
     return tokens
+    
 
 
 router.include_router(user_photo_routes, prefix="/me/photos")
 router.include_router(user_connections_routes, prefix="/{user_id}/connections", tags=["connections"])
+router.include_router(user_notifications_routes, prefix="/me/notifications", tags=["notifications"])
