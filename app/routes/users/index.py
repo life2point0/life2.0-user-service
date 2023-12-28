@@ -296,13 +296,13 @@ def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt
         if community is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         user.communities.append(community)
-        channel.add_members([token_data.sub])
+        channel.add_members([str(token_data.sub)])
         db.commit()
     except SQLAlchemyError as e:
         if isinstance(e, IntegrityError):
             raise HTTPException(status_code=status.HTTP_202_ACCEPTED, detail="You are already a member of this community")
         else:
-            channel.remove_members([token_data.sub])
+            channel.remove_members([str(token_data.sub)])
             handle_sqlalchemy_error(e)
     except HTTPError as e:
         raise HTTPException(status_code=e.response.status_code, detail=str(e.response.json()))
