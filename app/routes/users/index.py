@@ -251,7 +251,9 @@ def update_current_user(
         if query_params.notification_type is not None:
             background_tasks.add_task(notify_matching_users, db, user_id, query_params.notification_type)
             # notify_matching_users(db, user_id, query_params.notification_type)
-        return user
+        user_dto = UserPartialDTO.model_validate(user)
+        user_dto.is_profile_created = not is_new
+        return user_dto
     except SQLAlchemyError as e:
         handle_sqlalchemy_error(e)
 
@@ -285,7 +287,7 @@ async def signup(
 def join_community(payload: JoinCommunityDTO, token_data: TokenDTO = Depends(jwt_guard), db: DatabaseSession = Depends(get_db)):
     user_id = token_data.sub
     community_id = payload.community_id
-    channel = stream_chat.channel("community", payload.community_id)
+    channel = stream_chat.channel("community", str(payload.community_id))
     try:
         user = db.query(UserModel).options(joinedload(UserModel.communities)).filter(UserModel.id == user_id).first()
         if user is None:
