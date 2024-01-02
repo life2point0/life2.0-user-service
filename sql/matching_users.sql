@@ -105,8 +105,8 @@ SELECT * FROM (
         ) as min_distances
         GROUP BY user_id
     ) past_place_scores ON u.id = past_place_scores.user_id
-    -- LEFT JOIN user_connections uc ON (u.id = uc.connected_user_id AND uc.user_id = :given_user_id) OR (u.id = uc.user_id AND uc.connected_user_id = :given_user_id)
-    -- WHERE u.id != :given_user_id AND uc.id IS NULL
+    LEFT JOIN user_connections uc ON (u.id = uc.connected_user_id AND uc.user_id = :given_user_id) OR (u.id = uc.user_id AND uc.connected_user_id = :given_user_id)
+    WHERE u.id != :given_user_id AND uc.id IS NULL
     GROUP BY 
         u.id, 
         lang_count, 
