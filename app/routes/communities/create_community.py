@@ -27,7 +27,7 @@ def create_community(community_data: CommunityCreateRequestDTO,
     if ('community_admin' not in current_user.realm_access.roles):
         raise HTTPException(status_code=403, detail='You don\'t have access to create communities')
     try:
-        member_ids = [current_user.sub, *(community_data.members or [])]
+        member_ids = [str(current_user.sub), *(community_data.members or [])]
         new_community = CommunityModel(
             id=uuid4(),
             name=community_data.name,
@@ -45,8 +45,8 @@ def create_community(community_data: CommunityCreateRequestDTO,
         db.add(new_community)
         try: 
             rollback_stream_chat_channel = create_stream_chat_channel(
-                channel_id=new_community.id,
-                user_id=current_user.sub,
+                channel_id=str(new_community.id),
+                user_id=str(current_user.sub),
                 channel_data={
                     "name": new_community.name,
                     "description": new_community.description,

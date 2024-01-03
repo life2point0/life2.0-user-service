@@ -26,7 +26,7 @@ def get_community_recommendations(session: Session, user_id: str, page_number: i
         return [], 0
 
     # Initialize match score as a sum of conditions
-    match_score = 0
+    match_score = func.coalesce(0)
 
     # Location match condition
     if user.current_place or user.past_places or user.place_of_origin:
