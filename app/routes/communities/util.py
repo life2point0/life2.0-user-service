@@ -18,7 +18,7 @@ recommendation_cache = TTLCache(maxsize=1024, ttl=3600)
 def get_cache_key(*args, **kwargs):
     return keys.hashkey(*args[1:], **kwargs)
 
-@cached(recommendation_cache, get_cache_key)
+# @cached(recommendation_cache, get_cache_key) # TODO: Implement cache-key to update when user's relationships have changed
 def get_community_recommendations(session: Session, user_id: str, page_number: int = 0, per_page: int = 10):
     user = session.query(UserModel).filter(UserModel.id == user_id).one_or_none()
 
